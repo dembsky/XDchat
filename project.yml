@@ -62,8 +62,6 @@ targets:
       properties:
         com.apple.security.app-sandbox: false
         com.apple.security.network.client: true
-        keychain-access-groups:
-          - "$(AppIdentifierPrefix)com.xdchat.app"
 
 schemes:
   XDchat:
