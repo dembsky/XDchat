@@ -41,8 +41,8 @@
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="https://github.com/dembsky/XDchat/releases/download/v1.1/XDchat.zip"
-                sparkle:edSignature="MR4k+K1tbfTr4g51gwVaFqUphLZbt9Vv7R5P+yS5URUvje4F19MByQ7quv+Ev/9E4raEc/5PTnkuKa71wE2ZDA=="
-                length="18938970"
+                sparkle:edSignature="RnioGN4G2KnrkeSJDOz/U1xFNw+GENUfY5VxhW0rfgOvEfyBxBbTQs3oyrFY/zT86+SoUZ50hcl/opDEX6NaBw=="
+                length="18820477"
                 type="application/octet-stream"/>
         </item>
     </channel>
