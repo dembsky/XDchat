@@ -1,0 +1,80 @@
+name: XDchat
+options:
+  bundleIdPrefix: com.xdchat
+  deploymentTarget:
+    macOS: "15.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "11.0.0"
+  SDWebImageSwiftUI:
+    url: https://github.com/SDWebImage/SDWebImageSwiftUI
+    from: "3.0.0"
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.5.0"
+
+targets:
+  XDchat:
+    type: application
+    platform: macOS
+    sources:
+      - path: XDchat
+        excludes:
+          - "**/*.example"
+    resources:
+      - path: XDchat/Resources/Assets.xcassets
+      - path: XDchat/Resources/GoogleService-Info.plist
+        optional: true
+    settings:
+      base:
+        INFOPLIST_FILE: XDchat/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: XDchat/Resources/Entitlements.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.xdchat.app
+        PRODUCT_NAME: XDchat
+        GIPHY_API_KEY: REDACTED_GIPHY_KEY
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        COMBINE_HIDPI_IMAGES: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: SDWebImageSwiftUI
+      - package: Sparkle
+        product: Sparkle
+    entitlements:
+      path: XDchat/Resources/Entitlements.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.network.client: true
+        keychain-access-groups:
+          - "$(AppIdentifierPrefix)com.xdchat.app"
+
+schemes:
+  XDchat:
+    build:
+      targets:
+        XDchat: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
