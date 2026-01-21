@@ -168,20 +168,31 @@ final class FirebaseAuthREST {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.timeoutInterval = 30
+
+        print("FirebaseAuthREST: Making request to \(url)")
 
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            print("FirebaseAuthREST: Invalid response type")
             throw AuthError.networkError("Invalid response")
         }
 
+        print("FirebaseAuthREST: Response status: \(httpResponse.statusCode)")
+
         if httpResponse.statusCode == 200 {
-            return try JSONDecoder().decode(AuthResponse.self, from: data)
+            let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
+            print("FirebaseAuthREST: Successfully decoded response for user \(authResponse.localId)")
+            return authResponse
         } else {
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("FirebaseAuthREST: Error response: \(responseString)")
+            }
             if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
                 throw mapError(errorResponse.error.message)
             }
-            throw AuthError.unknown("Authentication failed")
+            throw AuthError.unknown("Authentication failed with status \(httpResponse.statusCode)")
         }
     }
 

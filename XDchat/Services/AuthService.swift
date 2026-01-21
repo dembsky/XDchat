@@ -149,54 +149,68 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         invitationCode: String?
     ) async throws {
         await MainActor.run { isLoading = true }
-        defer { Task { await MainActor.run { isLoading = false } } }
 
-        // Check if this is the first user (will be admin)
-        let isFirstUser = try await checkIfFirstUser()
-
-        // Validate invitation code if not first user
-        var invitation: Invitation?
-        if !isFirstUser {
-            guard let code = invitationCode, !code.isEmpty else {
-                throw AuthError.invalidInvitationCode
-            }
-            invitation = try await validateInvitationCode(code)
-        }
-
-        // Create user via REST API (bypasses Keychain)
-        let authResponse: FirebaseAuthREST.AuthResponse
         do {
-            authResponse = try await FirebaseAuthREST.shared.signUp(email: email, password: password)
+            print("AuthService: Starting registration for \(email)")
+
+            // Check if this is the first user (will be admin)
+            let isFirstUser = try await checkIfFirstUser()
+
+            // Validate invitation code if not first user
+            var invitation: Invitation?
+            if !isFirstUser {
+                guard let code = invitationCode, !code.isEmpty else {
+                    await MainActor.run { self.isLoading = false }
+                    throw AuthError.invalidInvitationCode
+                }
+                invitation = try await validateInvitationCode(code)
+            }
+
+            // Create user via REST API (bypasses Keychain)
+            let authResponse = try await FirebaseAuthREST.shared.signUp(email: email, password: password)
+
+            print("AuthService: Registration successful, userId: \(authResponse.localId)")
+
+            // Save session to file storage
+            AuthTokenStorage.shared.saveSession(response: authResponse)
+            currentUserId = authResponse.localId
+
+            // Create user document
+            let user = User(
+                id: authResponse.localId,
+                email: email,
+                displayName: displayName,
+                isAdmin: isFirstUser,
+                invitedBy: invitation?.createdBy,
+                canInvite: isFirstUser,
+                isOnline: true,
+                createdAt: Date()
+            )
+
+            try db.collection("users").document(authResponse.localId).setData(from: user)
+
+            // Mark invitation as used
+            if let invitation = invitation {
+                try await markInvitationAsUsed(invitation, usedBy: authResponse.localId)
+            }
+
+            // Fetch user to update UI
+            await MainActor.run {
+                self.isLoading = false
+                self.fetchUser(userId: authResponse.localId)
+            }
         } catch let error as FirebaseAuthREST.AuthError {
+            print("AuthService: Registration failed with REST error: \(error)")
+            await MainActor.run { self.isLoading = false }
             throw mapRESTError(error)
-        }
-
-        // Save session to file storage
-        AuthTokenStorage.shared.saveSession(response: authResponse)
-        currentUserId = authResponse.localId
-
-        // Create user document
-        let user = User(
-            id: authResponse.localId,
-            email: email,
-            displayName: displayName,
-            isAdmin: isFirstUser,
-            invitedBy: invitation?.createdBy,
-            canInvite: isFirstUser,
-            isOnline: true,
-            createdAt: Date()
-        )
-
-        try db.collection("users").document(authResponse.localId).setData(from: user)
-
-        // Mark invitation as used
-        if let invitation = invitation {
-            try await markInvitationAsUsed(invitation, usedBy: authResponse.localId)
-        }
-
-        // Fetch user to update UI
-        await MainActor.run {
-            self.fetchUser(userId: authResponse.localId)
+        } catch let error as AuthError {
+            print("AuthService: Registration failed with AuthError: \(error)")
+            await MainActor.run { self.isLoading = false }
+            throw error
+        } catch {
+            print("AuthService: Registration failed with error: \(error)")
+            await MainActor.run { self.isLoading = false }
+            throw AuthError.unknown(error.localizedDescription)
         }
     }
 
@@ -241,23 +255,32 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
     func login(email: String, password: String) async throws {
         await MainActor.run { isLoading = true }
-        defer { Task { await MainActor.run { isLoading = false } } }
 
-        // Use REST API instead of Firebase SDK (bypasses Keychain)
-        let authResponse: FirebaseAuthREST.AuthResponse
         do {
-            authResponse = try await FirebaseAuthREST.shared.signIn(email: email, password: password)
+            print("AuthService: Starting login for \(email)")
+
+            // Use REST API instead of Firebase SDK (bypasses Keychain)
+            let authResponse = try await FirebaseAuthREST.shared.signIn(email: email, password: password)
+
+            print("AuthService: Login successful, userId: \(authResponse.localId)")
+
+            // Save session to file storage
+            AuthTokenStorage.shared.saveSession(response: authResponse)
+            currentUserId = authResponse.localId
+
+            // Fetch user to update UI
+            await MainActor.run {
+                self.isLoading = false
+                self.fetchUser(userId: authResponse.localId)
+            }
         } catch let error as FirebaseAuthREST.AuthError {
+            print("AuthService: Login failed with REST error: \(error)")
+            await MainActor.run { self.isLoading = false }
             throw mapRESTError(error)
-        }
-
-        // Save session to file storage
-        AuthTokenStorage.shared.saveSession(response: authResponse)
-        currentUserId = authResponse.localId
-
-        // Fetch user to update UI
-        await MainActor.run {
-            self.fetchUser(userId: authResponse.localId)
+        } catch {
+            print("AuthService: Login failed with error: \(error)")
+            await MainActor.run { self.isLoading = false }
+            throw AuthError.unknown(error.localizedDescription)
         }
     }
 
