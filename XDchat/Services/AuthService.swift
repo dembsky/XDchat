@@ -52,7 +52,6 @@ class AuthService: ObservableObject, AuthServiceProtocol {
     @Published var isLoading = false
 
     private var db: Firestore { Firestore.firestore() }
-    private var userListener: ListenerRegistration?
     private var cancellables = Set<AnyCancellable>()
 
     /// Current user ID from stored session
@@ -62,9 +61,6 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         restoreSession()
     }
 
-    deinit {
-        userListener?.remove()
-    }
 
     // MARK: - Session Restoration
 
@@ -110,42 +106,74 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         }
     }
 
-    // MARK: - Fetch User
+    // MARK: - Fetch User (REST API version)
 
     private func fetchUser(userId: String) {
-        userListener?.remove()
+        Task {
+            await fetchUserREST(userId: userId)
+        }
+    }
 
-        // Store error to show to user
-        userListener = db.collection("users").document(userId)
-            .addSnapshotListener { [weak self] snapshot, error in
-                guard let self = self else { return }
-
-                if let error = error {
-                    // Show Firestore error to user
-                    self.lastError = "Firestore error: \(error.localizedDescription)"
-                    self.currentUser = nil
-                    self.isAuthenticated = false
-                    return
-                }
-
-                guard let snapshot = snapshot, snapshot.exists else {
-                    self.lastError = "User document not found for ID: \(userId)"
-                    self.currentUser = nil
-                    self.isAuthenticated = false
-                    return
-                }
-
-                do {
-                    self.currentUser = try snapshot.data(as: User.self)
-                    self.isAuthenticated = true
-                    self.lastError = nil
-                    self.updateOnlineStatus(true)
-                } catch {
-                    self.lastError = "Failed to decode user: \(error.localizedDescription)"
-                    self.currentUser = nil
-                    self.isAuthenticated = false
-                }
+    private func fetchUserREST(userId: String) async {
+        guard let session = AuthTokenStorage.shared.loadSession() else {
+            await MainActor.run {
+                self.lastError = "No session found"
+                self.currentUser = nil
+                self.isAuthenticated = false
             }
+            return
+        }
+
+        do {
+            guard let userData = try await FirestoreREST.shared.getDocument(
+                collection: "users",
+                documentId: userId,
+                idToken: session.idToken
+            ) else {
+                await MainActor.run {
+                    self.lastError = "User document not found"
+                    self.currentUser = nil
+                    self.isAuthenticated = false
+                }
+                return
+            }
+
+            // Parse user data
+            let user = User(
+                id: userId,
+                email: userData["email"] as? String ?? "",
+                displayName: userData["displayName"] as? String ?? "",
+                isAdmin: userData["isAdmin"] as? Bool ?? false,
+                invitedBy: userData["invitedBy"] as? String,
+                canInvite: userData["canInvite"] as? Bool ?? false,
+                avatarURL: userData["avatarURL"] as? String,
+                avatarData: userData["avatarData"] as? String,
+                isOnline: userData["isOnline"] as? Bool ?? false,
+                lastSeen: userData["lastSeen"] as? Date,
+                createdAt: userData["createdAt"] as? Date ?? Date()
+            )
+
+            await MainActor.run {
+                self.currentUser = user
+                self.isAuthenticated = true
+                self.lastError = nil
+            }
+
+            // Update online status
+            try? await FirestoreREST.shared.updateDocument(
+                collection: "users",
+                documentId: userId,
+                fields: ["isOnline": true],
+                idToken: session.idToken
+            )
+
+        } catch {
+            await MainActor.run {
+                self.lastError = "REST Firestore error: \(error.localizedDescription)"
+                self.currentUser = nil
+                self.isAuthenticated = false
+            }
+        }
     }
 
     /// Last error for debugging
@@ -299,7 +327,6 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
     func logout() throws {
         updateOnlineStatus(false)
-        userListener?.remove()
         AuthTokenStorage.shared.clearSession()
         currentUserId = nil
         currentUser = nil
@@ -320,13 +347,21 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
     func updateOnlineStatus(_ isOnline: Bool) {
         guard let userId = currentUser?.id ?? currentUserId else { return }
+        guard let session = AuthTokenStorage.shared.loadSession() else { return }
 
-        var updateData: [String: Any] = ["isOnline": isOnline]
-        if !isOnline {
-            updateData["lastSeen"] = FieldValue.serverTimestamp()
+        Task {
+            var updateData: [String: Any] = ["isOnline": isOnline]
+            if !isOnline {
+                updateData["lastSeen"] = Date()
+            }
+
+            try? await FirestoreREST.shared.updateDocument(
+                collection: "users",
+                documentId: userId,
+                fields: updateData,
+                idToken: session.idToken
+            )
         }
-
-        db.collection("users").document(userId).updateData(updateData)
     }
 
     // MARK: - Update Profile
