@@ -45,6 +45,20 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
     }
 
     func getAllUsers() async throws -> [User] {
+        // Try REST API first (for unsigned apps)
+        if let session = AuthTokenStorage.shared.loadSession() {
+            do {
+                let usersData = try await FirestoreREST.shared.listDocuments(
+                    collection: "users",
+                    idToken: session.idToken
+                )
+                return usersData.compactMap { parseUserFromDict($0) }
+            } catch {
+                print("REST getAllUsers failed, trying SDK: \(error)")
+            }
+        }
+
+        // Fallback to SDK
         let snapshot = try await db.collection("users")
             .limit(to: Constants.Pagination.defaultUserLimit)
             .getDocuments()
@@ -52,53 +66,38 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
     }
 
     func searchUsers(query: String, excludingUserId: String) async throws -> [User] {
-        let searchQuery = query.trimmed
+        let searchQuery = query.trimmed.lowercased()
         guard !searchQuery.isEmpty else { return [] }
 
-        var usersDict: [String: User] = [:]
+        // Use REST API to get all users and filter locally
+        let allUsers = try await getAllUsers()
 
-        // Search by displayName (case-sensitive prefix match)
-        let displayNameSnapshot = try await db.collection("users")
-            .whereField("displayName", isGreaterThanOrEqualTo: searchQuery)
-            .whereField("displayName", isLessThanOrEqualTo: searchQuery + "\u{f8ff}")
-            .limit(to: Constants.Pagination.defaultUserLimit)
-            .getDocuments()
+        return allUsers.filter { user in
+            guard user.id != excludingUserId else { return false }
 
-        for doc in displayNameSnapshot.documents {
-            if let user = try? doc.data(as: User.self), let id = user.id {
-                usersDict[id] = user
-            }
+            let displayNameMatch = user.displayName.lowercased().contains(searchQuery)
+            let emailMatch = user.email.lowercased().contains(searchQuery)
+
+            return displayNameMatch || emailMatch
         }
+    }
 
-        // Search by email (lowercase prefix match)
-        let emailSnapshot = try await db.collection("users")
-            .whereField("email", isGreaterThanOrEqualTo: searchQuery.lowercased())
-            .whereField("email", isLessThanOrEqualTo: searchQuery.lowercased() + "\u{f8ff}")
-            .limit(to: Constants.Pagination.defaultUserLimit)
-            .getDocuments()
+    private func parseUserFromDict(_ dict: [String: Any]) -> User? {
+        guard let id = dict["id"] as? String else { return nil }
 
-        for doc in emailSnapshot.documents {
-            if let user = try? doc.data(as: User.self), let id = user.id {
-                usersDict[id] = user
-            }
-        }
-
-        // Also search by displayName lowercase for partial matches
-        let lowerSearchQuery = searchQuery.lowercased()
-        let allUsersSnapshot = try await db.collection("users")
-            .limit(to: Constants.Pagination.defaultUserLimit)
-            .getDocuments()
-
-        for doc in allUsersSnapshot.documents {
-            if let user = try? doc.data(as: User.self), let id = user.id {
-                let displayNameLower = user.displayName.lowercased()
-                if displayNameLower.contains(lowerSearchQuery) {
-                    usersDict[id] = user
-                }
-            }
-        }
-
-        return Array(usersDict.values).filter { $0.id != excludingUserId }
+        return User(
+            id: id,
+            email: dict["email"] as? String ?? "",
+            displayName: dict["displayName"] as? String ?? "",
+            isAdmin: dict["isAdmin"] as? Bool ?? false,
+            invitedBy: dict["invitedBy"] as? String,
+            canInvite: dict["canInvite"] as? Bool ?? false,
+            avatarURL: dict["avatarURL"] as? String,
+            avatarData: dict["avatarData"] as? String,
+            isOnline: dict["isOnline"] as? Bool ?? false,
+            lastSeen: dict["lastSeen"] as? Date,
+            createdAt: dict["createdAt"] as? Date ?? Date()
+        )
     }
 
     /// Fetches users with pagination support
