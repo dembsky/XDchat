@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 1.9</title>
+            <description><![CDATA[
+                <h2>What's New in Version 1.9</h2>
+                <ul>
+                    <li>15 second timeout for login requests</li>
+                    <li>Better network error messages</li>
+                    <li>Fixed hanging login issue</li>
+                </ul>
+            ]]></description>
+            <pubDate>Tue, 21 Jan 2026 13:50:00 +0000</pubDate>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>1.9</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v1.9/XDchat.zip"
+                sparkle:edSignature="pHTJPy6IPRfOA2+09Pl7+saRjAonI9oqO+jYl4HXWi+IL6VIduXnt8qHUqSXpkx7mp0fXNw+RDWrjhhst7DpAQ=="
+                length="18823588"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 1.8</title>
             <description><![CDATA[
                 <h2>What's New in Version 1.8</h2>
