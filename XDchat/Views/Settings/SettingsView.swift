@@ -210,21 +210,33 @@ struct SettingsView: View {
 
     private var aboutTab: some View {
         VStack(spacing: Theme.Spacing.lg) {
-            Image(systemName: "bubble.left.and.bubble.right.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(Theme.messengerGradient)
+            Image("AppIconLightPreview")
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 128, height: 128)
+                .cornerRadius(28)
+                .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
 
             Text("XDchat")
                 .font(Theme.Typography.largeTitle)
                 .fontWeight(.bold)
 
-            Text("Version 1.0.0")
+            Text("Version \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
                 .font(Theme.Typography.callout)
                 .foregroundColor(.secondary)
 
             Text("A native macOS chat application")
                 .font(Theme.Typography.caption)
                 .foregroundColor(.secondary)
+
+            Spacer()
+                .frame(height: 20)
+
+            Text("This fabulous app was created because Zuckerberg\nis a big pile of shit and he deleted the Messenger app.")
+                .font(Theme.Typography.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .italic()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
