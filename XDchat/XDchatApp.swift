@@ -80,8 +80,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Disable Keychain Access Groups - allows app to run without code signing
         do {
             try Auth.auth().useUserAccessGroup(nil)
-        } catch {
-            print("Failed to set user access group: \(error)")
+        } catch let error as NSError {
+            // Error -34018 means keychain not available - ignore on unsigned apps
+            if error.code != -34018 {
+                print("Failed to set user access group: \(error)")
+            }
         }
 
         applyAppIcon()
