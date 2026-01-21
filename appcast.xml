@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 1.6</title>
+            <description><![CDATA[
+                <h2>What's New in Version 1.6</h2>
+                <ul>
+                    <li>File-based token storage for unsigned apps</li>
+                    <li>Works on any Mac without code signing</li>
+                    <li>Fixed Keychain access issues</li>
+                </ul>
+            ]]></description>
+            <pubDate>Tue, 21 Jan 2026 13:27:00 +0000</pubDate>
+            <sparkle:version>7</sparkle:version>
+            <sparkle:shortVersionString>1.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v1.6/XDchat.zip"
+                sparkle:edSignature="aoqYWqf5kPu4Nk36ZQa32T+blfBUzGJqKGQckZlAPfjb+7KOYmRT9qE6BCMibooKnNuL95rjatKc9x9lXsOtCQ=="
+                length="18759004"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 1.5</title>
             <description><![CDATA[
                 <h2>What's New in Version 1.5</h2>

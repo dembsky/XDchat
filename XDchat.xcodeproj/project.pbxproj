@@ -19,6 +19,7 @@
 		603E9A17B35B492DD91D3E5F /* ConversationsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A9F0E8D11BE724E82F8DC96 /* ConversationsViewModel.swift */; };
 		69B54E2DCAF5605C6F995280 /* InvitationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4C0D7F007100C95468E19D /* InvitationService.swift */; };
 		820D0F1E994BA42685BD8CB2 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBB3C5DED0F93573CCE86201 /* AuthViewModel.swift */; };
+		88C370EDF750E57495B8CC3C /* AuthTokenStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F147A03AB3747D18D51694CB /* AuthTokenStorage.swift */; };
 		88FA7845D5AAD886A11F588B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A04B28FBE45A8701BC4A6B0 /* Assets.xcassets */; };
 		8A5145FB9FF9EB8B52157E6E /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0539751F4642BC3CC4A5B8F6 /* AuthService.swift */; };
 		8ABF8E578613CC91B6ECDD38 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C9EA0843983F186EB8FE53 /* SettingsViewModel.swift */; };
@@ -86,6 +87,7 @@
 		DD07E51E5A70084D794046C2 /* ProfileAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileAvatarView.swift; sourceTree = "<group>"; };
 		E182081191E5B9B73A84D3C3 /* Entitlements.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Entitlements.entitlements; sourceTree = "<group>"; };
 		ED30CA7E2697C3B08934E36F /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		F147A03AB3747D18D51694CB /* AuthTokenStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthTokenStorage.swift; sourceTree = "<group>"; };
 		F6E336A615D9DEA900726E95 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -167,6 +169,7 @@
 			children = (
 				6F3A552B3317BD18913A77EE /* Protocols */,
 				0539751F4642BC3CC4A5B8F6 /* AuthService.swift */,
+				F147A03AB3747D18D51694CB /* AuthTokenStorage.swift */,
 				3C96C342A9CD017C35BDCC4E /* FirestoreService.swift */,
 				61F8E2D63FB546921E923292 /* GiphyService.swift */,
 				BE4C0D7F007100C95468E19D /* InvitationService.swift */,
@@ -350,6 +353,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A5145FB9FF9EB8B52157E6E /* AuthService.swift in Sources */,
+				88C370EDF750E57495B8CC3C /* AuthTokenStorage.swift in Sources */,
 				820D0F1E994BA42685BD8CB2 /* AuthViewModel.swift in Sources */,
 				E124929B3244FF76BDC0CAF5 /* ChatView.swift in Sources */,
 				0AECC8E74074F4F9D8E234AA /* ChatViewModel.swift in Sources */,

@@ -154,6 +154,9 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
         try db.collection("users").document(result.user.uid).setData(from: user)
 
+        // Save session to file storage for unsigned app support
+        AuthTokenStorage.shared.saveSession(user: result.user)
+
         // Mark invitation as used
         if let invitation = invitation {
             try await markInvitationAsUsed(invitation, usedBy: result.user.uid)
@@ -204,7 +207,9 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         defer { isLoading = false }
 
         do {
-            try await auth.signIn(withEmail: email, password: password)
+            let result = try await auth.signIn(withEmail: email, password: password)
+            // Save session to file storage for unsigned app support
+            AuthTokenStorage.shared.saveSession(user: result.user)
         } catch let error as NSError {
             throw mapFirebaseError(error)
         }
@@ -215,6 +220,8 @@ class AuthService: ObservableObject, AuthServiceProtocol {
     func logout() throws {
         updateOnlineStatus(false)
         try auth.signOut()
+        // Clear file-based session storage
+        AuthTokenStorage.shared.clearSession()
         currentUser = nil
         isAuthenticated = false
     }
