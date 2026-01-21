@@ -115,15 +115,21 @@ class AuthService: ObservableObject, AuthServiceProtocol {
     private func fetchUser(userId: String) {
         userListener?.remove()
 
+        // Store error to show to user
         userListener = db.collection("users").document(userId)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
 
-                if error != nil {
+                if let error = error {
+                    // Show Firestore error to user
+                    self.lastError = "Firestore error: \(error.localizedDescription)"
+                    self.currentUser = nil
+                    self.isAuthenticated = false
                     return
                 }
 
                 guard let snapshot = snapshot, snapshot.exists else {
+                    self.lastError = "User document not found for ID: \(userId)"
                     self.currentUser = nil
                     self.isAuthenticated = false
                     return
@@ -132,13 +138,18 @@ class AuthService: ObservableObject, AuthServiceProtocol {
                 do {
                     self.currentUser = try snapshot.data(as: User.self)
                     self.isAuthenticated = true
+                    self.lastError = nil
                     self.updateOnlineStatus(true)
                 } catch {
+                    self.lastError = "Failed to decode user: \(error.localizedDescription)"
                     self.currentUser = nil
                     self.isAuthenticated = false
                 }
             }
     }
+
+    /// Last error for debugging
+    @Published var lastError: String?
 
     // MARK: - Registration
 
