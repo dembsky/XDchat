@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 2.1</title>
+            <description><![CDATA[
+                <h2>What's New in Version 2.1</h2>
+                <ul>
+                    <li>Firestore REST API for user data</li>
+                    <li>Bypasses Firestore SDK permission issues</li>
+                    <li>Should fix login on unsigned apps</li>
+                </ul>
+            ]]></description>
+            <pubDate>Tue, 21 Jan 2026 14:10:00 +0000</pubDate>
+            <sparkle:version>12</sparkle:version>
+            <sparkle:shortVersionString>2.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v2.1/XDchat.zip"
+                sparkle:edSignature="jur+LO2dZq9Y4uU+6fgWleX4b9nwIrCfNMtaVTBOcnskWZTa6r4djr46buoZi5ffo7ON4I9Tr/Ns0GeKGEjBDQ=="
+                length="18851447"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 2.0</title>
             <description><![CDATA[
                 <h2>What's New in Version 2.0</h2>
