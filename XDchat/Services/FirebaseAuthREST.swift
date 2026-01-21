@@ -5,7 +5,15 @@ final class FirebaseAuthREST {
     static let shared = FirebaseAuthREST()
 
     private let apiKey: String
-    private let session = URLSession.shared
+    private let session: URLSession
+
+    private static func createSession() -> URLSession {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 15
+        config.timeoutIntervalForResource = 30
+        config.waitsForConnectivity = false
+        return URLSession(configuration: config)
+    }
 
     private init() {
         // Get API key from GoogleService-Info.plist
@@ -15,6 +23,7 @@ final class FirebaseAuthREST {
             fatalError("Missing API_KEY in GoogleService-Info.plist")
         }
         self.apiKey = key
+        self.session = Self.createSession()
     }
 
     // MARK: - Response Types
@@ -167,32 +176,46 @@ final class FirebaseAuthREST {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        request.timeoutInterval = 30
+        request.timeoutInterval = 15
 
-        print("FirebaseAuthREST: Making request to \(url)")
-
-        let (data, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            print("FirebaseAuthREST: Invalid response type")
-            throw AuthError.networkError("Invalid response")
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            throw AuthError.networkError("Failed to encode request")
         }
 
-        print("FirebaseAuthREST: Response status: \(httpResponse.statusCode)")
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let error as NSError {
+            if error.code == NSURLErrorTimedOut {
+                throw AuthError.networkError("Request timed out. Check your internet connection.")
+            } else if error.code == NSURLErrorNotConnectedToInternet {
+                throw AuthError.networkError("No internet connection.")
+            } else if error.code == NSURLErrorCannotConnectToHost {
+                throw AuthError.networkError("Cannot connect to server.")
+            } else {
+                throw AuthError.networkError("Network error: \(error.localizedDescription)")
+            }
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AuthError.networkError("Invalid response from server")
+        }
 
         if httpResponse.statusCode == 200 {
-            let authResponse = try JSONDecoder().decode(AuthResponse.self, from: data)
-            print("FirebaseAuthREST: Successfully decoded response for user \(authResponse.localId)")
-            return authResponse
-        } else {
-            if let responseString = String(data: data, encoding: .utf8) {
-                print("FirebaseAuthREST: Error response: \(responseString)")
+            do {
+                return try JSONDecoder().decode(AuthResponse.self, from: data)
+            } catch {
+                throw AuthError.unknown("Failed to parse server response")
             }
+        } else {
             if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
                 throw mapError(errorResponse.error.message)
             }
-            throw AuthError.unknown("Authentication failed with status \(httpResponse.statusCode)")
+            throw AuthError.unknown("Server error: \(httpResponse.statusCode)")
         }
     }
 
