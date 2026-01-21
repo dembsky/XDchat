@@ -6,6 +6,25 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 2.0</title>
+            <description><![CDATA[
+                <h2>What's New in Version 2.0</h2>
+                <ul>
+                    <li>Debug error display for Firestore issues</li>
+                    <li>Better error visibility</li>
+                </ul>
+            ]]></description>
+            <pubDate>Tue, 21 Jan 2026 14:02:00 +0000</pubDate>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v2.0/XDchat.zip"
+                sparkle:edSignature="W0WSo4Yp1+QvoHqH5tLeZTIfA16DyqHogQ0nOsCuTTtcMhOAWtUgb48GNe76cvhZAsm7NY2bIvrkYX7BBmdYDQ=="
+                length="18823374"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 1.9</title>
             <description><![CDATA[
                 <h2>What's New in Version 1.9</h2>

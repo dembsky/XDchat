@@ -18,6 +18,7 @@ class AuthViewModel: ObservableObject {
     @Published var isLoginMode = true
     @Published var isAuthenticated = false
     @Published var currentUser: User?
+    @Published var debugError: String?
 
     private let authService = AuthService.shared
     private var cancellables = Set<AnyCancellable>()
@@ -35,6 +36,11 @@ class AuthViewModel: ObservableObject {
         authService.$currentUser
             .receive(on: DispatchQueue.main)
             .assign(to: &$currentUser)
+
+        // Subscribe to debug errors
+        authService.$lastError
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$debugError)
     }
 
     // MARK: - Validation

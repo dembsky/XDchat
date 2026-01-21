@@ -108,6 +108,17 @@ struct LoginView: View {
                         .cornerRadius(8)
                 }
 
+                // Debug Error (Firestore issues)
+                if let debugError = viewModel.debugError {
+                    Text("DEBUG: \(debugError)")
+                        .font(Theme.Typography.caption)
+                        .foregroundColor(.white)
+                        .padding(Theme.Spacing.sm)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.orange.opacity(0.9))
+                        .cornerRadius(8)
+                }
+
                 // Success Message
                 if viewModel.showSuccess, let successMessage = viewModel.successMessage {
                     Text(successMessage)
