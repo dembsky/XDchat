@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 1.8</title>
+            <description><![CDATA[
+                <h2>What's New in Version 1.8</h2>
+                <ul>
+                    <li>Fixed loading state stuck issue</li>
+                    <li>Added debug logging for troubleshooting</li>
+                    <li>Better error handling</li>
+                </ul>
+            ]]></description>
+            <pubDate>Tue, 21 Jan 2026 13:42:00 +0000</pubDate>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>1.8</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v1.8/XDchat.zip"
+                sparkle:edSignature="k6DnKJsKvpxb/6sVUFud1lWLmrTr1f3gZ3XWvQbPdj1rL8JIhUz34y7Xd5pQ9RxXWtUgAq0xdM+de24wrU8nBQ=="
+                length="18823732"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 1.7</title>
             <description><![CDATA[
                 <h2>What's New in Version 1.7</h2>
