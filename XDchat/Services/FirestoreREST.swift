@@ -146,6 +146,97 @@ final class FirestoreREST {
         return result
     }
 
+    // MARK: - List Documents (for getting all users)
+
+    func listDocuments(collection: String, idToken: String, limit: Int = 100) async throws -> [[String: Any]] {
+        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collection)?pageSize=\(limit)"
+
+        guard let url = URL(string: urlString) else {
+            throw FirestoreError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw FirestoreError.invalidResponse
+        }
+
+        if httpResponse.statusCode != 200 {
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let error = errorJson["error"] as? [String: Any],
+               let message = error["message"] as? String {
+                throw FirestoreError.serverError(message)
+            }
+            throw FirestoreError.serverError("Status: \(httpResponse.statusCode)")
+        }
+
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let documents = json["documents"] as? [[String: Any]] else {
+            return []
+        }
+
+        return documents.compactMap { doc -> [String: Any]? in
+            guard let fields = doc["fields"] as? [String: Any],
+                  let name = doc["name"] as? String else { return nil }
+
+            // Extract document ID from name path
+            let docId = name.components(separatedBy: "/").last ?? ""
+
+            var parsed = parseFirestoreFields(fields)
+            parsed["id"] = docId
+            return parsed
+        }
+    }
+
+    // MARK: - Create Document
+
+    func createDocument(collection: String, documentId: String?, fields: [String: Any], idToken: String) async throws -> String {
+        var urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collection)"
+        if let docId = documentId {
+            urlString += "?documentId=\(docId)"
+        }
+
+        guard let url = URL(string: urlString) else {
+            throw FirestoreError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let firestoreFields = convertToFirestoreFields(fields)
+        let body: [String: Any] = ["fields": firestoreFields]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw FirestoreError.invalidResponse
+        }
+
+        if httpResponse.statusCode != 200 {
+            if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let error = errorJson["error"] as? [String: Any],
+               let message = error["message"] as? String {
+                throw FirestoreError.serverError(message)
+            }
+            throw FirestoreError.serverError("Status: \(httpResponse.statusCode)")
+        }
+
+        // Return document ID
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let name = json["name"] as? String {
+            return name.components(separatedBy: "/").last ?? ""
+        }
+
+        return documentId ?? ""
+    }
+
     // MARK: - Errors
 
     enum FirestoreError: LocalizedError {

@@ -6,6 +6,25 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 2.2</title>
+            <description><![CDATA[
+                <h2>What's New in Version 2.2</h2>
+                <ul>
+                    <li>User search via REST API</li>
+                    <li>Should fix "No users found" issue</li>
+                </ul>
+            ]]></description>
+            <pubDate>Tue, 21 Jan 2026 14:15:00 +0000</pubDate>
+            <sparkle:version>13</sparkle:version>
+            <sparkle:shortVersionString>2.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v2.2/XDchat.zip"
+                sparkle:edSignature="rWZWQ8I7H1pWQff5hhXMEATUzn33I7XpwskdcDU14eu/nPWGzs/vJGNn8abbWcYVQdWo4xMchJvsahh52HUrBw=="
+                length="18851218"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 2.1</title>
             <description><![CDATA[
                 <h2>What's New in Version 2.1</h2>
