@@ -1,5 +1,4 @@
 import Foundation
-import FirebaseAuth
 
 /// Stores Firebase Auth tokens in Application Support instead of Keychain
 /// This allows the app to work without code signing
@@ -26,18 +25,27 @@ final class AuthTokenStorage {
     struct StoredSession: Codable {
         let userId: String
         let email: String?
-        let refreshToken: String?
+        let idToken: String
+        let refreshToken: String
+        let expiresAt: Date
         let lastLogin: Date
+
+        var isExpired: Bool {
+            Date() >= expiresAt
+        }
     }
 
     // MARK: - Public Methods
 
-    /// Save current user session to file
-    func saveSession(user: FirebaseAuth.User) {
+    /// Save session from REST API response
+    func saveSession(response: FirebaseAuthREST.AuthResponse) {
+        let expiresIn = Int(response.expiresIn) ?? 3600
         let session = StoredSession(
-            userId: user.uid,
-            email: user.email,
-            refreshToken: user.refreshToken,
+            userId: response.localId,
+            email: response.email,
+            idToken: response.idToken,
+            refreshToken: response.refreshToken,
+            expiresAt: Date().addingTimeInterval(TimeInterval(expiresIn)),
             lastLogin: Date()
         )
 
@@ -46,6 +54,27 @@ final class AuthTokenStorage {
             try data.write(to: storageURL, options: [.atomic, .completeFileProtection])
         } catch {
             print("AuthTokenStorage: Failed to save session - \(error)")
+        }
+    }
+
+    /// Update tokens after refresh
+    func updateTokens(idToken: String, refreshToken: String, expiresIn: Int) {
+        guard var session = loadSession() else { return }
+
+        let updatedSession = StoredSession(
+            userId: session.userId,
+            email: session.email,
+            idToken: idToken,
+            refreshToken: refreshToken,
+            expiresAt: Date().addingTimeInterval(TimeInterval(expiresIn)),
+            lastLogin: session.lastLogin
+        )
+
+        do {
+            let data = try JSONEncoder().encode(updatedSession)
+            try data.write(to: storageURL, options: [.atomic, .completeFileProtection])
+        } catch {
+            print("AuthTokenStorage: Failed to update tokens - \(error)")
         }
     }
 

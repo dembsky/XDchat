@@ -43,6 +43,7 @@
 		DC9F14908D92EAEAE2D3C3B8 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 1D675EC92C88C25F08100936 /* FirebaseAuth */; };
 		E124929B3244FF76BDC0CAF5 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED30CA7E2697C3B08934E36F /* ChatView.swift */; };
 		E3EC48058F9D69CF7FBE86EC /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4149581E6C91BB23954566FB /* MessageBubbleView.swift */; };
+		E55B8630645D26018AE106A2 /* FirebaseAuthREST.swift in Sources */ = {isa = PBXBuildFile; fileRef = 655202B8C2950C32FACE010E /* FirebaseAuthREST.swift */; };
 		E8662C0E2DFA378CA16F2AD3 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02793CDBEC1CE32ADECFC27C /* Constants.swift */; };
 		EA5C44E050602CF8BB39BABA /* MessageInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B32E9B70491E7973F2E62CC /* MessageInputView.swift */; };
 		EF26F5E440651021F20BAF55 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B5230CDDB40C7C50837E7E /* Theme.swift */; };
@@ -68,6 +69,7 @@
 		5E73DD8F15DDE10DA4C5B912 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		61F8E2D63FB546921E923292 /* GiphyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiphyService.swift; sourceTree = "<group>"; };
 		651B6BEC167D2F9EC93AAE76 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
+		655202B8C2950C32FACE010E /* FirebaseAuthREST.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseAuthREST.swift; sourceTree = "<group>"; };
 		749F7C13424B1687597C4A28 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		77B13AC1DBF46D29F57527C1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		78B5230CDDB40C7C50837E7E /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -170,6 +172,7 @@
 				6F3A552B3317BD18913A77EE /* Protocols */,
 				0539751F4642BC3CC4A5B8F6 /* AuthService.swift */,
 				F147A03AB3747D18D51694CB /* AuthTokenStorage.swift */,
+				655202B8C2950C32FACE010E /* FirebaseAuthREST.swift */,
 				3C96C342A9CD017C35BDCC4E /* FirestoreService.swift */,
 				61F8E2D63FB546921E923292 /* GiphyService.swift */,
 				BE4C0D7F007100C95468E19D /* InvitationService.swift */,
@@ -363,6 +366,7 @@
 				96BDEEBF8C04F8F397749DC7 /* ConversationRowView.swift in Sources */,
 				603E9A17B35B492DD91D3E5F /* ConversationsViewModel.swift in Sources */,
 				C7D5F33C4462F6F40BD3B71F /* Extensions.swift in Sources */,
+				E55B8630645D26018AE106A2 /* FirebaseAuthREST.swift in Sources */,
 				D1CFEEF61D4B5B263DC347DE /* FirestoreService.swift in Sources */,
 				1F8B857F732D50667C71D3CF /* GiphyPickerView.swift in Sources */,
 				8ED5633C68705E74DC790ED9 /* GiphyService.swift in Sources */,
