@@ -174,8 +174,8 @@ struct MainView: View {
                             size: 28
                         )
 
-                        // User name next to avatar (fallback to email if displayName empty)
-                        Text(user.displayName.isEmpty ? user.email : user.displayName)
+                        // User name next to avatar (fallback to email, then ID)
+                        Text(getUserDisplayText(user))
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(.primary)
                             .lineLimit(1)
@@ -190,6 +190,17 @@ struct MainView: View {
         }
     }
 
+    private func getUserDisplayText(_ user: User) -> String {
+        if !user.displayName.isEmpty {
+            return user.displayName
+        } else if !user.email.isEmpty {
+            return user.email
+        } else if let id = user.id {
+            return "User: \(String(id.prefix(8)))..."
+        } else {
+            return "Unknown User"
+        }
+    }
 }
 
 #Preview {

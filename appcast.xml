@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 2.5</title>
+            <description><![CDATA[
+                <h2>What's New in Version 2.5</h2>
+                <ul>
+                    <li>Better user display in toolbar (shows ID if no name/email)</li>
+                    <li>Improved error messages for authentication issues</li>
+                    <li>Removed SDK fallback that caused permission errors</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 23 Jan 2026 09:30:00 +0000</pubDate>
+            <sparkle:version>16</sparkle:version>
+            <sparkle:shortVersionString>2.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v2.5/XDchat.zip"
+                sparkle:edSignature="hISaWhi0LsoccQoSk1ChwC0Csn0XtGr/2vZVK/FKY1spsXa8xWT+UfSbI5TfcZLVKwqvkIMABBF0I8UsYZLMAA=="
+                length="18802230"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 2.4</title>
             <description><![CDATA[
                 <h2>What's New in Version 2.4</h2>

@@ -254,6 +254,8 @@ final class FirestoreREST {
         case invalidResponse
         case parseError
         case serverError(String)
+        case notAuthenticated
+        case tokenExpired
 
         var errorDescription: String? {
             switch self {
@@ -265,6 +267,10 @@ final class FirestoreREST {
                 return "Failed to parse Firestore response"
             case .serverError(let message):
                 return "Firestore error: \(message)"
+            case .notAuthenticated:
+                return "Not authenticated. Please log in again."
+            case .tokenExpired:
+                return "Session expired. Please log in again."
             }
         }
     }
