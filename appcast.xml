@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 2.3</title>
+            <description><![CDATA[
+                <h2>What's New in Version 2.3</h2>
+                <ul>
+                    <li>Display logged-in user name next to avatar in toolbar</li>
+                    <li>Fix for macOS Menu rendering issue</li>
+                    <li>Debug logging for user search</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 23 Jan 2026 08:45:00 +0000</pubDate>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>2.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v2.3/XDchat.zip"
+                sparkle:edSignature="T1Ptt41I45ly4144Uvlkq+VYT8TKEvTURrQZN7NlQv3vbPjiojU1rTb8f33gkpt9pDhyj/KORqzxWb56WwAbDg=="
+                length="18929193"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 2.2</title>
             <description><![CDATA[
                 <h2>What's New in Version 2.2</h2>
