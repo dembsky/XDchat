@@ -118,6 +118,11 @@ final class FirestoreREST {
                 result[key] = formatter.date(from: timestampValue) ?? Date()
             } else if valueDict["nullValue"] != nil {
                 result[key] = NSNull()
+            } else if let arrayValue = valueDict["arrayValue"] as? [String: Any],
+                      let values = arrayValue["values"] as? [[String: Any]] {
+                // Parse array of strings
+                let stringArray = values.compactMap { $0["stringValue"] as? String }
+                result[key] = stringArray
             }
         }
 
@@ -140,6 +145,9 @@ final class FirestoreREST {
                 let formatter = ISO8601DateFormatter()
                 formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                 result[key] = ["timestampValue": formatter.string(from: dateValue)]
+            } else if let arrayValue = value as? [String] {
+                let arrayItems = arrayValue.map { ["stringValue": $0] }
+                result[key] = ["arrayValue": ["values": arrayItems]]
             }
         }
 
@@ -196,6 +204,66 @@ final class FirestoreREST {
             // Extract document ID from name path
             let docId = name.components(separatedBy: "/").last ?? ""
 
+            var parsed = parseFirestoreFields(fields)
+            parsed["id"] = docId
+            return parsed
+        }
+    }
+
+    // MARK: - Query Documents (for finding existing conversation)
+
+    func queryDocuments(collection: String, field: String, values: [String], idToken: String) async throws -> [[String: Any]] {
+        let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents:runQuery"
+
+        guard let url = URL(string: urlString) else {
+            throw FirestoreError.invalidURL
+        }
+
+        // Build structured query for array equality
+        let arrayValues = values.map { ["stringValue": $0] }
+        let query: [String: Any] = [
+            "structuredQuery": [
+                "from": [["collectionId": collection]],
+                "where": [
+                    "fieldFilter": [
+                        "field": ["fieldPath": field],
+                        "op": "EQUAL",
+                        "value": ["arrayValue": ["values": arrayValues]]
+                    ]
+                ],
+                "limit": 1
+            ]
+        ]
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: query)
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw FirestoreError.invalidResponse
+        }
+
+        if httpResponse.statusCode != 200 {
+            if let responseStr = String(data: data, encoding: .utf8) {
+                print("[FirestoreREST] Query error: \(responseStr)")
+            }
+            throw FirestoreError.serverError("Query failed: \(httpResponse.statusCode)")
+        }
+
+        guard let results = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            return []
+        }
+
+        return results.compactMap { result -> [String: Any]? in
+            guard let document = result["document"] as? [String: Any],
+                  let fields = document["fields"] as? [String: Any],
+                  let name = document["name"] as? String else { return nil }
+
+            let docId = name.components(separatedBy: "/").last ?? ""
             var parsed = parseFirestoreFields(fields)
             parsed["id"] = docId
             return parsed
