@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 2.8</title>
+            <description><![CDATA[
+                <h2>What's New in Version 2.8</h2>
+                <ul>
+                    <li>Fixed: User dropdown now shows correct email and display name</li>
+                    <li>Fixed: User search respects Firestore pageSize limit (50)</li>
+                    <li>Auto-sync missing user data from Firebase Auth to Firestore</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 23 Jan 2026 10:00:00 +0000</pubDate>
+            <sparkle:version>19</sparkle:version>
+            <sparkle:shortVersionString>2.8</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v2.8/XDchat-2.8.zip"
+                sparkle:edSignature="TxMcz5jcwiu58F2nkpOwrDP5FLKF8mgIQrRAdRmXqnRPm1X6zEOHKU4nzn0pNTWsClZsuZ/RYM+kCIseLa5eAg=="
+                length="18760351"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 2.6</title>
             <description><![CDATA[
                 <h2>What's New in Version 2.6</h2>

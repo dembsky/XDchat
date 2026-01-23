@@ -148,7 +148,7 @@ final class FirestoreREST {
 
     // MARK: - List Documents (for getting all users)
 
-    func listDocuments(collection: String, idToken: String, limit: Int = 100) async throws -> [[String: Any]] {
+    func listDocuments(collection: String, idToken: String, limit: Int = 50) async throws -> [[String: Any]] {
         let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collection)?pageSize=\(limit)"
 
         print("[FirestoreREST] Listing documents from: \(collection)")
