@@ -111,26 +111,9 @@ class ChatViewModel: ObservableObject {
         // Convert emoticons to emoji (e.g., :D → 😄)
         let text = messageText.trimmed.withEmoji
 
-        print("[ChatViewModel] sendTextMessage called, text: '\(text)'")
-        print("[ChatViewModel] conversationId: \(conversationId ?? "nil")")
-        print("[ChatViewModel] currentUserId: \(currentUserId ?? "nil")")
-
-        guard !text.isEmpty else {
-            print("[ChatViewModel] Text is empty, not sending")
-            return
-        }
-
-        guard let conversationId = conversationId else {
-            print("[ChatViewModel] ERROR: conversationId is nil!")
-            errorMessage = "Cannot send message: conversation not initialized"
-            return
-        }
-
-        guard let senderId = currentUserId else {
-            print("[ChatViewModel] ERROR: currentUserId is nil!")
-            errorMessage = "Cannot send message: not logged in"
-            return
-        }
+        guard !text.isEmpty,
+              let conversationId = conversationId,
+              let senderId = currentUserId else { return }
 
         // Validate message length
         let maxLength = 10000
@@ -159,12 +142,9 @@ class ChatViewModel: ObservableObject {
         )
 
         do {
-            print("[ChatViewModel] Calling firestoreService.sendMessage...")
             try await firestoreService.sendMessage(message)
-            print("[ChatViewModel] Message sent successfully!")
             await updateTypingStatus(isTyping: false)
         } catch {
-            print("[ChatViewModel] ERROR sending message: \(error)")
             errorMessage = error.localizedDescription
             messageText = tempText // Restore text on failure
         }

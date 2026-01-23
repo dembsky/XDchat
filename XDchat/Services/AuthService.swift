@@ -1,5 +1,6 @@
 import Foundation
 import FirebaseCore
+import FirebaseAuth
 import FirebaseFirestore
 import Combine
 
@@ -52,154 +53,65 @@ class AuthService: ObservableObject, AuthServiceProtocol {
     @Published var isLoading = false
 
     private var db: Firestore { Firestore.firestore() }
-    private var cancellables = Set<AnyCancellable>()
-
-    /// Current user ID from stored session
-    private var currentUserId: String?
+    private var authStateListener: AuthStateDidChangeListenerHandle?
 
     private init() {
-        restoreSession()
+        setupAuthStateListener()
     }
 
-
-    // MARK: - Session Restoration
-
-    private func restoreSession() {
-        guard let session = AuthTokenStorage.shared.loadSession() else {
-            return
-        }
-
-        // Check if token is expired and refresh if needed
-        if session.isExpired {
-            Task {
-                await refreshTokenIfNeeded()
-            }
-        } else {
-            currentUserId = session.userId
-            fetchUser(userId: session.userId)
+    deinit {
+        if let listener = authStateListener {
+            Auth.auth().removeStateDidChangeListener(listener)
         }
     }
 
-    private func refreshTokenIfNeeded() async {
-        guard let session = AuthTokenStorage.shared.loadSession() else { return }
+    // MARK: - Auth State Listener
 
-        do {
-            let response = try await FirebaseAuthREST.shared.refreshToken(session.refreshToken)
-            let expiresIn = Int(response.expires_in) ?? 3600
-            AuthTokenStorage.shared.updateTokens(
-                idToken: response.id_token,
-                refreshToken: response.refresh_token,
-                expiresIn: expiresIn
-            )
+    private func setupAuthStateListener() {
+        authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, firebaseUser in
+            guard let self = self else { return }
 
-            await MainActor.run {
-                self.currentUserId = session.userId
-                self.fetchUser(userId: session.userId)
-            }
-        } catch {
-            print("Token refresh failed: \(error)")
-            await MainActor.run {
-                AuthTokenStorage.shared.clearSession()
+            if let firebaseUser = firebaseUser {
+                self.fetchUser(userId: firebaseUser.uid)
+            } else {
                 self.currentUser = nil
                 self.isAuthenticated = false
             }
         }
     }
 
-    // MARK: - Fetch User (REST API version)
+    // MARK: - Fetch User
 
     private func fetchUser(userId: String) {
         Task {
-            await fetchUserREST(userId: userId)
-        }
-    }
+            do {
+                let document = try await db.collection("users").document(userId).getDocument()
 
-    private func fetchUserREST(userId: String) async {
-        guard let session = AuthTokenStorage.shared.loadSession() else {
-            await MainActor.run {
-                self.lastError = "No session found"
-                self.currentUser = nil
-                self.isAuthenticated = false
-            }
-            return
-        }
+                if let user = try? document.data(as: User.self) {
+                    await MainActor.run {
+                        self.currentUser = user
+                        self.isAuthenticated = true
+                    }
 
-        do {
-            guard let userData = try await FirestoreREST.shared.getDocument(
-                collection: "users",
-                documentId: userId,
-                idToken: session.idToken
-            ) else {
+                    // Update online status
+                    try? await db.collection("users").document(userId).updateData([
+                        "isOnline": true
+                    ])
+                } else {
+                    await MainActor.run {
+                        self.currentUser = nil
+                        self.isAuthenticated = false
+                    }
+                }
+            } catch {
+                print("Error fetching user: \(error)")
                 await MainActor.run {
-                    self.lastError = "User document not found"
                     self.currentUser = nil
                     self.isAuthenticated = false
                 }
-                return
-            }
-
-            // Parse user data - use session email as fallback
-            let firestoreEmail = userData["email"] as? String ?? ""
-            let email = firestoreEmail.isEmpty ? (session.email ?? "") : firestoreEmail
-
-            let firestoreDisplayName = userData["displayName"] as? String ?? ""
-            // Use email prefix as fallback display name if both are empty
-            let displayName: String
-            if !firestoreDisplayName.isEmpty {
-                displayName = firestoreDisplayName
-            } else if !email.isEmpty {
-                displayName = email.components(separatedBy: "@").first ?? email
-            } else {
-                displayName = ""
-            }
-
-            let user = User(
-                id: userId,
-                email: email,
-                displayName: displayName,
-                isAdmin: userData["isAdmin"] as? Bool ?? false,
-                invitedBy: userData["invitedBy"] as? String,
-                canInvite: userData["canInvite"] as? Bool ?? false,
-                avatarURL: userData["avatarURL"] as? String,
-                avatarData: userData["avatarData"] as? String,
-                isOnline: userData["isOnline"] as? Bool ?? false,
-                lastSeen: userData["lastSeen"] as? Date,
-                createdAt: userData["createdAt"] as? Date ?? Date()
-            )
-
-            await MainActor.run {
-                self.currentUser = user
-                self.isAuthenticated = true
-                self.lastError = nil
-            }
-
-            // Update Firestore with correct data if fields were empty
-            var updateFields: [String: Any] = ["isOnline": true]
-            if firestoreEmail.isEmpty && !email.isEmpty {
-                updateFields["email"] = email
-            }
-            if firestoreDisplayName.isEmpty && !displayName.isEmpty {
-                updateFields["displayName"] = displayName
-            }
-
-            try? await FirestoreREST.shared.updateDocument(
-                collection: "users",
-                documentId: userId,
-                fields: updateFields,
-                idToken: session.idToken
-            )
-
-        } catch {
-            await MainActor.run {
-                self.lastError = "REST Firestore error: \(error.localizedDescription)"
-                self.currentUser = nil
-                self.isAuthenticated = false
             }
         }
     }
-
-    /// Last error for debugging
-    @Published var lastError: String?
 
     // MARK: - Registration
 
@@ -210,68 +122,41 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         invitationCode: String?
     ) async throws {
         await MainActor.run { isLoading = true }
+        defer { Task { await MainActor.run { self.isLoading = false } } }
 
-        do {
-            print("AuthService: Starting registration for \(email)")
+        // Check if this is the first user (will be admin)
+        let isFirstUser = try await checkIfFirstUser()
 
-            // Check if this is the first user (will be admin)
-            let isFirstUser = try await checkIfFirstUser()
-
-            // Validate invitation code if not first user
-            var invitation: Invitation?
-            if !isFirstUser {
-                guard let code = invitationCode, !code.isEmpty else {
-                    await MainActor.run { self.isLoading = false }
-                    throw AuthError.invalidInvitationCode
-                }
-                invitation = try await validateInvitationCode(code)
+        // Validate invitation code if not first user
+        var invitation: Invitation?
+        if !isFirstUser {
+            guard let code = invitationCode, !code.isEmpty else {
+                throw AuthError.invalidInvitationCode
             }
+            invitation = try await validateInvitationCode(code)
+        }
 
-            // Create user via REST API (bypasses Keychain)
-            let authResponse = try await FirebaseAuthREST.shared.signUp(email: email, password: password)
+        // Create user with Firebase Auth
+        let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
+        let userId = authResult.user.uid
 
-            print("AuthService: Registration successful, userId: \(authResponse.localId)")
+        // Create user document in Firestore
+        let user = User(
+            id: userId,
+            email: email,
+            displayName: displayName,
+            isAdmin: isFirstUser,
+            invitedBy: invitation?.createdBy,
+            canInvite: isFirstUser,
+            isOnline: true,
+            createdAt: Date()
+        )
 
-            // Save session to file storage
-            AuthTokenStorage.shared.saveSession(response: authResponse)
-            currentUserId = authResponse.localId
+        try db.collection("users").document(userId).setData(from: user)
 
-            // Create user document
-            let user = User(
-                id: authResponse.localId,
-                email: email,
-                displayName: displayName,
-                isAdmin: isFirstUser,
-                invitedBy: invitation?.createdBy,
-                canInvite: isFirstUser,
-                isOnline: true,
-                createdAt: Date()
-            )
-
-            try db.collection("users").document(authResponse.localId).setData(from: user)
-
-            // Mark invitation as used
-            if let invitation = invitation {
-                try await markInvitationAsUsed(invitation, usedBy: authResponse.localId)
-            }
-
-            // Fetch user to update UI
-            await MainActor.run {
-                self.isLoading = false
-                self.fetchUser(userId: authResponse.localId)
-            }
-        } catch let error as FirebaseAuthREST.AuthError {
-            print("AuthService: Registration failed with REST error: \(error)")
-            await MainActor.run { self.isLoading = false }
-            throw mapRESTError(error)
-        } catch let error as AuthError {
-            print("AuthService: Registration failed with AuthError: \(error)")
-            await MainActor.run { self.isLoading = false }
-            throw error
-        } catch {
-            print("AuthService: Registration failed with error: \(error)")
-            await MainActor.run { self.isLoading = false }
-            throw AuthError.unknown(error.localizedDescription)
+        // Mark invitation as used
+        if let invitation = invitation {
+            try await markInvitationAsUsed(invitation, usedBy: userId)
         }
     }
 
@@ -316,32 +201,12 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
     func login(email: String, password: String) async throws {
         await MainActor.run { isLoading = true }
+        defer { Task { await MainActor.run { self.isLoading = false } } }
 
         do {
-            print("AuthService: Starting login for \(email)")
-
-            // Use REST API instead of Firebase SDK (bypasses Keychain)
-            let authResponse = try await FirebaseAuthREST.shared.signIn(email: email, password: password)
-
-            print("AuthService: Login successful, userId: \(authResponse.localId)")
-
-            // Save session to file storage
-            AuthTokenStorage.shared.saveSession(response: authResponse)
-            currentUserId = authResponse.localId
-
-            // Fetch user to update UI
-            await MainActor.run {
-                self.isLoading = false
-                self.fetchUser(userId: authResponse.localId)
-            }
-        } catch let error as FirebaseAuthREST.AuthError {
-            print("AuthService: Login failed with REST error: \(error)")
-            await MainActor.run { self.isLoading = false }
-            throw mapRESTError(error)
-        } catch {
-            print("AuthService: Login failed with error: \(error)")
-            await MainActor.run { self.isLoading = false }
-            throw AuthError.unknown(error.localizedDescription)
+            try await Auth.auth().signIn(withEmail: email, password: password)
+        } catch let error as NSError {
+            throw mapFirebaseError(error)
         }
     }
 
@@ -349,8 +214,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
     func logout() throws {
         updateOnlineStatus(false)
-        AuthTokenStorage.shared.clearSession()
-        currentUserId = nil
+        try Auth.auth().signOut()
         currentUser = nil
         isAuthenticated = false
     }
@@ -358,31 +222,21 @@ class AuthService: ObservableObject, AuthServiceProtocol {
     // MARK: - Password Reset
 
     func resetPassword(email: String) async throws {
-        do {
-            try await FirebaseAuthREST.shared.sendPasswordReset(email: email)
-        } catch let error as FirebaseAuthREST.AuthError {
-            throw mapRESTError(error)
-        }
+        try await Auth.auth().sendPasswordReset(withEmail: email)
     }
 
     // MARK: - Online Status
 
     func updateOnlineStatus(_ isOnline: Bool) {
-        guard let userId = currentUser?.id ?? currentUserId else { return }
-        guard let session = AuthTokenStorage.shared.loadSession() else { return }
+        guard let userId = currentUser?.id ?? Auth.auth().currentUser?.uid else { return }
 
         Task {
             var updateData: [String: Any] = ["isOnline": isOnline]
             if !isOnline {
-                updateData["lastSeen"] = Date()
+                updateData["lastSeen"] = FieldValue.serverTimestamp()
             }
 
-            try? await FirestoreREST.shared.updateDocument(
-                collection: "users",
-                documentId: userId,
-                fields: updateData,
-                idToken: session.idToken
-            )
+            try? await db.collection("users").document(userId).updateData(updateData)
         }
     }
 
@@ -396,38 +250,28 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         ])
     }
 
-    // MARK: - Get Current Token
-
-    /// Get valid ID token for authenticated requests
-    func getIdToken() async -> String? {
-        guard let session = AuthTokenStorage.shared.loadSession() else { return nil }
-
-        if session.isExpired {
-            await refreshTokenIfNeeded()
-            return AuthTokenStorage.shared.loadSession()?.idToken
-        }
-
-        return session.idToken
-    }
-
     // MARK: - Error Mapping
 
-    private func mapRESTError(_ error: FirebaseAuthREST.AuthError) -> AuthError {
-        switch error {
+    private func mapFirebaseError(_ error: NSError) -> AuthError {
+        guard let errorCode = AuthErrorCode(rawValue: error.code) else {
+            return .unknown(error.localizedDescription)
+        }
+
+        switch errorCode {
         case .invalidEmail:
             return .invalidEmail
-        case .emailNotFound, .wrongPassword:
-            return .wrongPassword
-        case .emailExists:
+        case .emailAlreadyInUse:
             return .emailAlreadyInUse
         case .weakPassword:
             return .weakPassword
+        case .userNotFound:
+            return .userNotFound
+        case .wrongPassword:
+            return .wrongPassword
         case .networkError:
             return .networkError
-        case .tooManyAttempts:
-            return .unknown("Too many failed attempts. Please try again later.")
-        case .unknown(let msg):
-            return .unknown(msg)
+        default:
+            return .unknown(error.localizedDescription)
         }
     }
 }
