@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 3.0</title>
+            <description><![CDATA[
+                <h2>What's New in Version 3.0</h2>
+                <ul>
+                    <li>Fixed: Conversation creation now uses REST API (works on unsigned apps)</li>
+                    <li>Fixed: Search checks both displayName and email</li>
+                    <li>Added: Array support in Firestore REST API</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 23 Jan 2026 10:30:00 +0000</pubDate>
+            <sparkle:version>21</sparkle:version>
+            <sparkle:shortVersionString>3.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v3.0/XDchat-3.0.zip"
+                sparkle:edSignature="9CQ+pTKods4hW+mDtS+Wq41qS0zjzUGh+6d5BQIpf6x/v78LyCXmE9P1MNsAHgUvTEwtTS2SGtD47lZtGtLLCA=="
+                length="18763966"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 2.9</title>
             <description><![CDATA[
                 <h2>What's New in Version 2.9</h2>

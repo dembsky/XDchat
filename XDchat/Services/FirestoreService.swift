@@ -136,23 +136,60 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
     // MARK: - Conversations
 
     func createConversation(participants: [String]) async throws -> Conversation {
-        // Check if conversation already exists between these participants
-        if let existingConversation = try await findExistingConversation(participants: participants) {
+        guard let session = AuthTokenStorage.shared.loadSession() else {
+            throw FirestoreREST.FirestoreError.notAuthenticated
+        }
+
+        let sortedParticipants = participants.sorted()
+        print("[FirestoreService] Creating conversation for participants: \(sortedParticipants)")
+
+        // Check if conversation already exists between these participants (via REST)
+        if let existingConversation = try await findExistingConversationREST(participants: sortedParticipants, idToken: session.idToken) {
+            print("[FirestoreService] Found existing conversation: \(existingConversation.id ?? "no-id")")
             return existingConversation
         }
 
-        let conversation = Conversation(
-            participants: participants,
-            createdAt: Date()
+        // Create new conversation via REST API
+        let fields: [String: Any] = [
+            "participants": sortedParticipants,
+            "createdAt": Date(),
+            "lastMessageAt": Date()
+        ]
+
+        let docId = try await FirestoreREST.shared.createDocument(
+            collection: "conversations",
+            documentId: nil,
+            fields: fields,
+            idToken: session.idToken
         )
 
-        let docRef = db.collection("conversations").document()
-        var newConversation = conversation
-        newConversation.id = docRef.documentID
+        print("[FirestoreService] Created new conversation: \(docId)")
 
-        try docRef.setData(from: newConversation)
+        return Conversation(
+            id: docId,
+            participants: sortedParticipants,
+            createdAt: Date()
+        )
+    }
 
-        return newConversation
+    private func findExistingConversationREST(participants: [String], idToken: String) async throws -> Conversation? {
+        let results = try await FirestoreREST.shared.queryDocuments(
+            collection: "conversations",
+            field: "participants",
+            values: participants,
+            idToken: idToken
+        )
+
+        guard let first = results.first else { return nil }
+
+        return Conversation(
+            id: first["id"] as? String,
+            participants: first["participants"] as? [String] ?? participants,
+            lastMessage: first["lastMessage"] as? String,
+            lastMessageAt: first["lastMessageAt"] as? Date,
+            lastMessageSenderId: first["lastMessageSenderId"] as? String,
+            createdAt: first["createdAt"] as? Date ?? Date()
+        )
     }
 
     func deleteConversation(conversationId: String) async throws {
@@ -172,17 +209,6 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
         batch.deleteDocument(db.collection("conversations").document(conversationId))
 
         try await batch.commit()
-    }
-
-    private func findExistingConversation(participants: [String]) async throws -> Conversation? {
-        let sortedParticipants = participants.sorted()
-
-        let snapshot = try await db.collection("conversations")
-            .whereField("participants", isEqualTo: sortedParticipants)
-            .limit(to: 1)
-            .getDocuments()
-
-        return try snapshot.documents.first?.data(as: Conversation.self)
     }
 
     func getConversations(for userId: String) async throws -> [Conversation] {
