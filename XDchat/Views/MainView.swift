@@ -115,6 +115,21 @@ struct MainView: View {
 
             Menu {
                 if let user = authViewModel.currentUser {
+                    // User info header (as Button that does nothing - required for macOS Menu)
+                    Button {} label: {
+                        Text(user.displayName.isEmpty ? "User" : user.displayName)
+                    }
+                    .disabled(true)
+
+                    Button {} label: {
+                        Text(user.email.isEmpty ? (user.id ?? "Unknown") : user.email)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .disabled(true)
+
+                    Divider()
+
                     if user.isAdmin || user.canInvite {
                         Button {
                             showInviteUsers = true
@@ -174,11 +189,6 @@ struct MainView: View {
                             size: 28
                         )
 
-                        // User name next to avatar (fallback to email, then ID)
-                        Text(getUserDisplayText(user))
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
                     }
 
                     Image(systemName: "chevron.down")
