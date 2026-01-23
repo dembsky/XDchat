@@ -150,14 +150,19 @@ class ConversationsViewModel: ObservableObject {
 
     func startConversation(with user: User) async {
         guard let currentUserId = currentUserId,
-              let otherUserId = user.id else { return }
+              let otherUserId = user.id else {
+            print("[ConversationsViewModel] startConversation: missing currentUserId or otherUserId")
+            return
+        }
 
+        print("[ConversationsViewModel] Starting conversation with user: \(user.displayName) (\(otherUserId))")
         isLoading = true
         defer { isLoading = false }
 
         do {
             let participants = [currentUserId, otherUserId].sorted()
             let conversation = try await firestoreService.createConversation(participants: participants)
+            print("[ConversationsViewModel] Conversation created/found: \(conversation.id ?? "no-id")")
 
             // Cache the user
             users[otherUserId] = user
@@ -166,7 +171,9 @@ class ConversationsViewModel: ObservableObject {
             showNewConversationSheet = false
             searchQuery = ""
             searchResults = []
+            print("[ConversationsViewModel] selectedConversation set")
         } catch {
+            print("[ConversationsViewModel] Error creating conversation: \(error)")
             errorMessage = error.localizedDescription
         }
     }
