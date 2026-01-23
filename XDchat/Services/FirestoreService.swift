@@ -48,31 +48,46 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
         // Try REST API first (for unsigned apps)
         if let session = AuthTokenStorage.shared.loadSession() {
             do {
+                print("[FirestoreService] Fetching all users via REST API...")
                 let usersData = try await FirestoreREST.shared.listDocuments(
                     collection: "users",
                     idToken: session.idToken
                 )
-                return usersData.compactMap { parseUserFromDict($0) }
+                print("[FirestoreService] REST API returned \(usersData.count) user documents")
+                let users = usersData.compactMap { parseUserFromDict($0) }
+                print("[FirestoreService] Parsed \(users.count) users from REST response")
+                if !users.isEmpty {
+                    return users
+                }
+                print("[FirestoreService] REST returned empty, trying SDK...")
             } catch {
-                print("REST getAllUsers failed, trying SDK: \(error)")
+                print("[FirestoreService] REST getAllUsers failed: \(error), trying SDK...")
             }
+        } else {
+            print("[FirestoreService] No session available for REST API, using SDK...")
         }
 
         // Fallback to SDK
+        print("[FirestoreService] Fetching users via Firestore SDK...")
         let snapshot = try await db.collection("users")
             .limit(to: Constants.Pagination.defaultUserLimit)
             .getDocuments()
-        return snapshot.documents.compactMap { try? $0.data(as: User.self) }
+        let users = snapshot.documents.compactMap { try? $0.data(as: User.self) }
+        print("[FirestoreService] SDK returned \(users.count) users")
+        return users
     }
 
     func searchUsers(query: String, excludingUserId: String) async throws -> [User] {
         let searchQuery = query.trimmed.lowercased()
         guard !searchQuery.isEmpty else { return [] }
 
+        print("[FirestoreService] Searching users with query: '\(searchQuery)', excluding: \(excludingUserId)")
+
         // Use REST API to get all users and filter locally
         let allUsers = try await getAllUsers()
+        print("[FirestoreService] Got \(allUsers.count) total users to search through")
 
-        return allUsers.filter { user in
+        let results = allUsers.filter { user in
             guard user.id != excludingUserId else { return false }
 
             let displayNameMatch = user.displayName.lowercased().contains(searchQuery)
@@ -80,6 +95,9 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
 
             return displayNameMatch || emailMatch
         }
+
+        print("[FirestoreService] Search found \(results.count) matching users")
+        return results
     }
 
     private func parseUserFromDict(_ dict: [String: Any]) -> User? {

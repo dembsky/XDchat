@@ -151,6 +151,8 @@ final class FirestoreREST {
     func listDocuments(collection: String, idToken: String, limit: Int = 100) async throws -> [[String: Any]] {
         let urlString = "https://firestore.googleapis.com/v1/projects/\(projectId)/databases/(default)/documents/\(collection)?pageSize=\(limit)"
 
+        print("[FirestoreREST] Listing documents from: \(collection)")
+
         guard let url = URL(string: urlString) else {
             throw FirestoreError.invalidURL
         }
@@ -165,7 +167,12 @@ final class FirestoreREST {
             throw FirestoreError.invalidResponse
         }
 
+        print("[FirestoreREST] Response status: \(httpResponse.statusCode)")
+
         if httpResponse.statusCode != 200 {
+            if let responseStr = String(data: data, encoding: .utf8) {
+                print("[FirestoreREST] Error response: \(responseStr)")
+            }
             if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let error = errorJson["error"] as? [String: Any],
                let message = error["message"] as? String {
@@ -176,8 +183,11 @@ final class FirestoreREST {
 
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let documents = json["documents"] as? [[String: Any]] else {
+            print("[FirestoreREST] No documents found in response")
             return []
         }
+
+        print("[FirestoreREST] Found \(documents.count) documents")
 
         return documents.compactMap { doc -> [String: Any]? in
             guard let fields = doc["fields"] as? [String: Any],
