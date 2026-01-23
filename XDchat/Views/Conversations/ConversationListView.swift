@@ -235,10 +235,28 @@ struct NewConversationView: View {
                         }
 
                         if viewModel.allUsers.isEmpty {
-                            Text("No other users yet")
-                                .font(Theme.Typography.callout)
-                                .foregroundColor(.secondary)
-                                .padding(.top, Theme.Spacing.xl)
+                            VStack(spacing: Theme.Spacing.sm) {
+                                Text("No other users yet")
+                                    .font(Theme.Typography.callout)
+                                    .foregroundColor(.secondary)
+
+                                if let error = viewModel.errorMessage {
+                                    Text(error)
+                                        .font(Theme.Typography.caption)
+                                        .foregroundColor(.red)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal)
+                                }
+
+                                Button("Retry") {
+                                    Task {
+                                        await viewModel.fetchAllUsers()
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundColor(Theme.Colors.accent)
+                            }
+                            .padding(.top, Theme.Spacing.xl)
                         }
                     }
                 }
@@ -260,6 +278,12 @@ struct NewConversationView: View {
             }
         }
         .frame(width: 400, height: 500)
+        .onAppear {
+            // Wymuś pobranie użytkowników przy otwarciu okna
+            Task {
+                await viewModel.fetchAllUsers()
+            }
+        }
     }
 }
 

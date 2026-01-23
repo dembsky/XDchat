@@ -27,9 +27,24 @@ class ConversationsViewModel: ObservableObject {
 
     init() {
         setupSearchDebounce()
-        Task {
-            await fetchAllUsers()
-        }
+        setupAuthObserver()
+    }
+
+    // MARK: - Auth Observer
+
+    private func setupAuthObserver() {
+        // Obserwuj zmiany currentUser w AuthService
+        // Gdy użytkownik się zaloguje, pobierz listę użytkowników
+        authService.$currentUser
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] user in
+                guard let self = self, user != nil else { return }
+                // Użytkownik zalogowany - pobierz listę użytkowników
+                Task {
+                    await self.fetchAllUsers()
+                }
+            }
+            .store(in: &cancellables)
     }
 
     nonisolated func cleanup() {
@@ -191,13 +206,21 @@ class ConversationsViewModel: ObservableObject {
     // MARK: - Fetch All Users
 
     func fetchAllUsers() async {
-        guard let currentUserId = currentUserId else { return }
+        // Pobierz currentUserId - jeśli nil, i tak spróbuj pobrać użytkowników
+        let excludeUserId = currentUserId
 
         do {
             let fetchedUsers = try await firestoreService.getAllUsers()
-            allUsers = fetchedUsers.filter { $0.id != currentUserId }
+            // Filtruj bieżącego użytkownika jeśli znany
+            if let excludeId = excludeUserId {
+                allUsers = fetchedUsers.filter { $0.id != excludeId }
+            } else {
+                allUsers = fetchedUsers
+            }
+            print("[ConversationsViewModel] Loaded \(allUsers.count) users")
         } catch {
-            // Silently handle fetch errors
+            print("[ConversationsViewModel] Error fetching users: \(error)")
+            errorMessage = "Failed to load users: \(error.localizedDescription)"
         }
     }
 
