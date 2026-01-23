@@ -51,9 +51,8 @@ struct MessageInputView: View {
 
             // Text input
             HStack(alignment: .bottom, spacing: Theme.Spacing.sm) {
-                TextField("Aa", text: $text, axis: .vertical)
+                TextField("Aa", text: $text)
                     .textFieldStyle(.plain)
-                    .lineLimit(1...5)
                     .focused($isFocused)
                     .onSubmit {
                         if !text.trimmed.isEmpty {
