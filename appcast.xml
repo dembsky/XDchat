@@ -6,6 +6,25 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 3.2</title>
+            <description><![CDATA[
+                <h2>Version 3.2 (Debug)</h2>
+                <ul>
+                    <li>Added extensive debug logging</li>
+                    <li>Run from terminal to see logs</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 23 Jan 2026 11:00:00 +0000</pubDate>
+            <sparkle:version>23</sparkle:version>
+            <sparkle:shortVersionString>3.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v3.2/XDchat-3.2.zip"
+                sparkle:edSignature="SHL97PdPTCE50ZaG7IdlhBbfpXTl4zfhOPsmPbmt9hlheRR2CNJ7/clIcqGEheTY/teTEqChkMjZjZNBvPH+BQ=="
+                length="18772559"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 3.1</title>
             <description><![CDATA[
                 <h2>What's New in Version 3.1</h2>

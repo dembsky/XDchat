@@ -55,7 +55,9 @@ struct MessageInputView: View {
                     .textFieldStyle(.plain)
                     .focused($isFocused)
                     .onSubmit {
+                        print("[MessageInputView] onSubmit triggered, text: '\(text.trimmed)'")
                         if !text.trimmed.isEmpty {
+                            print("[MessageInputView] Calling onSend()")
                             onSend()
                         }
                     }
@@ -77,7 +79,10 @@ struct MessageInputView: View {
 
                 // Send button inside text field
                 if !text.trimmed.isEmpty {
-                    Button(action: onSend) {
+                    Button(action: {
+                        print("[MessageInputView] Send button clicked")
+                        onSend()
+                    }) {
                         if isSending {
                             ProgressView()
                                 .scaleEffect(0.7)
