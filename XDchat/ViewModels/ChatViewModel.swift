@@ -110,9 +110,27 @@ class ChatViewModel: ObservableObject {
     ) async {
         // Convert emoticons to emoji (e.g., :D → 😄)
         let text = messageText.trimmed.withEmoji
-        guard !text.isEmpty,
-              let conversationId = conversationId,
-              let senderId = currentUserId else { return }
+
+        print("[ChatViewModel] sendTextMessage called, text: '\(text)'")
+        print("[ChatViewModel] conversationId: \(conversationId ?? "nil")")
+        print("[ChatViewModel] currentUserId: \(currentUserId ?? "nil")")
+
+        guard !text.isEmpty else {
+            print("[ChatViewModel] Text is empty, not sending")
+            return
+        }
+
+        guard let conversationId = conversationId else {
+            print("[ChatViewModel] ERROR: conversationId is nil!")
+            errorMessage = "Cannot send message: conversation not initialized"
+            return
+        }
+
+        guard let senderId = currentUserId else {
+            print("[ChatViewModel] ERROR: currentUserId is nil!")
+            errorMessage = "Cannot send message: not logged in"
+            return
+        }
 
         // Validate message length
         let maxLength = 10000

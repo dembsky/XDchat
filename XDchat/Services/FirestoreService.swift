@@ -251,25 +251,66 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
         message: String,
         senderId: String
     ) async throws {
-        try await db.collection("conversations").document(conversationId).updateData([
-            "lastMessage": message,
-            "lastMessageAt": FieldValue.serverTimestamp(),
-            "lastMessageSenderId": senderId
-        ])
+        guard let session = AuthTokenStorage.shared.loadSession() else {
+            throw FirestoreREST.FirestoreError.notAuthenticated
+        }
+
+        try await FirestoreREST.shared.updateDocument(
+            collection: "conversations",
+            documentId: conversationId,
+            fields: [
+                "lastMessage": message,
+                "lastMessageAt": Date(),
+                "lastMessageSenderId": senderId
+            ],
+            idToken: session.idToken
+        )
     }
 
     // MARK: - Messages
 
     func sendMessage(_ message: Message) async throws {
-        let docRef = db.collection("conversations")
-            .document(message.conversationId)
-            .collection("messages")
-            .document()
+        guard let session = AuthTokenStorage.shared.loadSession() else {
+            throw FirestoreREST.FirestoreError.notAuthenticated
+        }
 
-        var newMessage = message
-        newMessage.id = docRef.documentID
+        print("[FirestoreService] Sending message to conversation: \(message.conversationId)")
 
-        try docRef.setData(from: newMessage)
+        // Build message fields
+        var fields: [String: Any] = [
+            "conversationId": message.conversationId,
+            "senderId": message.senderId,
+            "content": message.content,
+            "type": message.type.rawValue,
+            "timestamp": message.timestamp,
+            "isRead": message.isRead
+        ]
+
+        if let gifUrl = message.gifUrl {
+            fields["gifUrl"] = gifUrl
+        }
+        if let stickerName = message.stickerName {
+            fields["stickerName"] = stickerName
+        }
+        if let replyToId = message.replyToId {
+            fields["replyToId"] = replyToId
+        }
+        if let replyToContent = message.replyToContent {
+            fields["replyToContent"] = replyToContent
+        }
+        if let replyToSenderId = message.replyToSenderId {
+            fields["replyToSenderId"] = replyToSenderId
+        }
+
+        // Create message document in subcollection via REST
+        let messageId = try await FirestoreREST.shared.createDocument(
+            collection: "conversations/\(message.conversationId)/messages",
+            documentId: nil,
+            fields: fields,
+            idToken: session.idToken
+        )
+
+        print("[FirestoreService] Message created with ID: \(messageId)")
 
         // Update conversation last message
         let displayMessage: String

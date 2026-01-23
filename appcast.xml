@@ -6,6 +6,26 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 3.1</title>
+            <description><![CDATA[
+                <h2>What's New in Version 3.1</h2>
+                <ul>
+                    <li>Fixed: sendMessage now uses REST API (works on unsigned apps)</li>
+                    <li>Fixed: Enter key sends message</li>
+                    <li>Added: Debug logging for troubleshooting</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 23 Jan 2026 10:45:00 +0000</pubDate>
+            <sparkle:version>22</sparkle:version>
+            <sparkle:shortVersionString>3.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v3.1/XDchat-3.1.zip"
+                sparkle:edSignature="Ueush7XH6ZDGp9aBhwczUD7ugPtOmbLp0fBzBBKr5FvwivRmdSDBwdYq1GZC/ns5Y8YaCYhiZBtrYVatTTRNAQ=="
+                length="18769325"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 3.0</title>
             <description><![CDATA[
                 <h2>What's New in Version 3.0</h2>
