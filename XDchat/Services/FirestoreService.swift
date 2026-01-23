@@ -46,34 +46,25 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
 
     func getAllUsers() async throws -> [User] {
         // Try REST API first (for unsigned apps)
-        if let session = AuthTokenStorage.shared.loadSession() {
-            do {
-                print("[FirestoreService] Fetching all users via REST API...")
-                let usersData = try await FirestoreREST.shared.listDocuments(
-                    collection: "users",
-                    idToken: session.idToken
-                )
-                print("[FirestoreService] REST API returned \(usersData.count) user documents")
-                let users = usersData.compactMap { parseUserFromDict($0) }
-                print("[FirestoreService] Parsed \(users.count) users from REST response")
-                if !users.isEmpty {
-                    return users
-                }
-                print("[FirestoreService] REST returned empty, trying SDK...")
-            } catch {
-                print("[FirestoreService] REST getAllUsers failed: \(error), trying SDK...")
-            }
-        } else {
-            print("[FirestoreService] No session available for REST API, using SDK...")
+        guard let session = AuthTokenStorage.shared.loadSession() else {
+            print("[FirestoreService] No session available")
+            throw FirestoreREST.FirestoreError.notAuthenticated
         }
 
-        // Fallback to SDK
-        print("[FirestoreService] Fetching users via Firestore SDK...")
-        let snapshot = try await db.collection("users")
-            .limit(to: Constants.Pagination.defaultUserLimit)
-            .getDocuments()
-        let users = snapshot.documents.compactMap { try? $0.data(as: User.self) }
-        print("[FirestoreService] SDK returned \(users.count) users")
+        // Check if token needs refresh
+        if session.isExpired {
+            print("[FirestoreService] Token expired, need refresh")
+            throw FirestoreREST.FirestoreError.tokenExpired
+        }
+
+        print("[FirestoreService] Fetching all users via REST API...")
+        let usersData = try await FirestoreREST.shared.listDocuments(
+            collection: "users",
+            idToken: session.idToken
+        )
+        print("[FirestoreService] REST API returned \(usersData.count) user documents")
+        let users = usersData.compactMap { parseUserFromDict($0) }
+        print("[FirestoreService] Parsed \(users.count) users from REST response")
         return users
     }
 
