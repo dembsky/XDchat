@@ -115,16 +115,6 @@ struct MainView: View {
 
             Menu {
                 if let user = authViewModel.currentUser {
-                    Section {
-                        Text(user.displayName)
-                            .font(.headline)
-                        Text(user.email)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    Divider()
-
                     if user.isAdmin || user.canInvite {
                         Button {
                             showInviteUsers = true
@@ -141,7 +131,9 @@ struct MainView: View {
                         }
                     }
 
-                    Divider()
+                    if user.isAdmin || user.canInvite {
+                        Divider()
+                    }
 
                     // Theme submenu
                     Menu("Appearance") {
@@ -181,6 +173,11 @@ struct MainView: View {
                             initials: user.initials,
                             size: 28
                         )
+
+                        // User name next to avatar
+                        Text(user.displayName)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.primary)
                     }
 
                     Image(systemName: "chevron.down")
