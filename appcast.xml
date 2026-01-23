@@ -6,6 +6,25 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 2.9</title>
+            <description><![CDATA[
+                <h2>What's New in Version 2.9</h2>
+                <ul>
+                    <li>UX Fix: User search now requires typing (no list shown by default)</li>
+                    <li>Debug: Added logging for conversation creation</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 23 Jan 2026 10:15:00 +0000</pubDate>
+            <sparkle:version>20</sparkle:version>
+            <sparkle:shortVersionString>2.9</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v2.9/XDchat-2.9.zip"
+                sparkle:edSignature="l0LQEE24KtVdBmv3oU4ceAXKZvvfWQLr425DUh6v3dDH5FpR8o4DbdCsFyKRuaKlkhcc33hz4a13c/eI4Gk9Ag=="
+                length="18746754"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 2.8</title>
             <description><![CDATA[
                 <h2>What's New in Version 2.8</h2>

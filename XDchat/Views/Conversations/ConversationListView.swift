@@ -205,10 +205,25 @@ struct NewConversationView: View {
             .padding(Theme.Spacing.lg)
 
             // Results
-            if viewModel.isSearching {
+            if viewModel.searchQuery.isEmpty {
+                // Empty state - prompt to search
+                VStack(spacing: Theme.Spacing.lg) {
+                    Spacer()
+                    Image(systemName: "person.2")
+                        .font(.system(size: 50))
+                        .foregroundColor(.secondary.opacity(0.5))
+                    Text("Search for users")
+                        .font(Theme.Typography.headline)
+                        .foregroundColor(.secondary)
+                    Text("Type a name or email to find people")
+                        .font(Theme.Typography.callout)
+                        .foregroundColor(.secondary.opacity(0.8))
+                    Spacer()
+                }
+            } else if viewModel.isSearching {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if viewModel.searchResults.isEmpty && !viewModel.searchQuery.isEmpty {
+            } else if viewModel.searchResults.isEmpty {
                 VStack(spacing: Theme.Spacing.md) {
                     Spacer()
                     Image(systemName: "person.slash")
@@ -217,48 +232,15 @@ struct NewConversationView: View {
                     Text("No users found")
                         .font(Theme.Typography.callout)
                         .foregroundColor(.secondary)
-                    Spacer()
-                }
-            } else if viewModel.searchQuery.isEmpty {
-                // Show all users when not searching
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.allUsers) { user in
-                            UserRowView(user: user) {
-                                Task {
-                                    await viewModel.startConversation(with: user)
-                                    dismiss()
-                                }
-                            }
-                            Divider()
-                                .padding(.leading, 72)
-                        }
 
-                        if viewModel.allUsers.isEmpty {
-                            VStack(spacing: Theme.Spacing.sm) {
-                                Text("No other users yet")
-                                    .font(Theme.Typography.callout)
-                                    .foregroundColor(.secondary)
-
-                                if let error = viewModel.errorMessage {
-                                    Text(error)
-                                        .font(Theme.Typography.caption)
-                                        .foregroundColor(.red)
-                                        .multilineTextAlignment(.center)
-                                        .padding(.horizontal)
-                                }
-
-                                Button("Retry") {
-                                    Task {
-                                        await viewModel.fetchAllUsers()
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                                .foregroundColor(Theme.Colors.accent)
-                            }
-                            .padding(.top, Theme.Spacing.xl)
-                        }
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(Theme.Typography.caption)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
                     }
+                    Spacer()
                 }
             } else {
                 ScrollView {
@@ -278,12 +260,6 @@ struct NewConversationView: View {
             }
         }
         .frame(width: 400, height: 500)
-        .onAppear {
-            // Wymuś pobranie użytkowników przy otwarciu okna
-            Task {
-                await viewModel.fetchAllUsers()
-            }
-        }
     }
 }
 
