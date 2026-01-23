@@ -6,6 +6,27 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 2.4</title>
+            <description><![CDATA[
+                <h2>What's New in Version 2.4</h2>
+                <ul>
+                    <li>Fixed user search (race condition bug)</li>
+                    <li>Fixed user name display in toolbar</li>
+                    <li>Added Retry button for user loading</li>
+                    <li>Better error handling</li>
+                </ul>
+            ]]></description>
+            <pubDate>Thu, 23 Jan 2026 09:15:00 +0000</pubDate>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>2.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v2.4/XDchat.zip"
+                sparkle:edSignature="6GLKipNFyC0z8xQ8nNt+UV8tXAE0mh2mTJLmlgWKXGIgv/sYDMGjMcL4lb1qxaEn4QK92y8edW5UCDrGzp3bDQ=="
+                length="18804174"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 2.3</title>
             <description><![CDATA[
                 <h2>What's New in Version 2.3</h2>

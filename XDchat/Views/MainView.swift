@@ -174,10 +174,11 @@ struct MainView: View {
                             size: 28
                         )
 
-                        // User name next to avatar
-                        Text(user.displayName)
+                        // User name next to avatar (fallback to email if displayName empty)
+                        Text(user.displayName.isEmpty ? user.email : user.displayName)
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(.primary)
+                            .lineLimit(1)
                     }
 
                     Image(systemName: "chevron.down")
