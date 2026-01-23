@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -18,9 +18,7 @@
 		4B498AAE77290110CA2E4B48 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C4C90DB22425C798D00A37B5 /* GoogleService-Info.plist */; };
 		603E9A17B35B492DD91D3E5F /* ConversationsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A9F0E8D11BE724E82F8DC96 /* ConversationsViewModel.swift */; };
 		69B54E2DCAF5605C6F995280 /* InvitationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE4C0D7F007100C95468E19D /* InvitationService.swift */; };
-		70D45F8DF30BE42D3A9CA840 /* FirestoreREST.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBA51F7C347F674FFA3E1CC /* FirestoreREST.swift */; };
 		820D0F1E994BA42685BD8CB2 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBB3C5DED0F93573CCE86201 /* AuthViewModel.swift */; };
-		88C370EDF750E57495B8CC3C /* AuthTokenStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F147A03AB3747D18D51694CB /* AuthTokenStorage.swift */; };
 		88FA7845D5AAD886A11F588B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A04B28FBE45A8701BC4A6B0 /* Assets.xcassets */; };
 		8A5145FB9FF9EB8B52157E6E /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0539751F4642BC3CC4A5B8F6 /* AuthService.swift */; };
 		8ABF8E578613CC91B6ECDD38 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C9EA0843983F186EB8FE53 /* SettingsViewModel.swift */; };
@@ -44,7 +42,6 @@
 		DC9F14908D92EAEAE2D3C3B8 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 1D675EC92C88C25F08100936 /* FirebaseAuth */; };
 		E124929B3244FF76BDC0CAF5 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED30CA7E2697C3B08934E36F /* ChatView.swift */; };
 		E3EC48058F9D69CF7FBE86EC /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4149581E6C91BB23954566FB /* MessageBubbleView.swift */; };
-		E55B8630645D26018AE106A2 /* FirebaseAuthREST.swift in Sources */ = {isa = PBXBuildFile; fileRef = 655202B8C2950C32FACE010E /* FirebaseAuthREST.swift */; };
 		E8662C0E2DFA378CA16F2AD3 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02793CDBEC1CE32ADECFC27C /* Constants.swift */; };
 		EA5C44E050602CF8BB39BABA /* MessageInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B32E9B70491E7973F2E62CC /* MessageInputView.swift */; };
 		EF26F5E440651021F20BAF55 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B5230CDDB40C7C50837E7E /* Theme.swift */; };
@@ -67,11 +64,9 @@
 		3F95AE2CEEC25777468FF5B4 /* ListenerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenerManager.swift; sourceTree = "<group>"; };
 		4149581E6C91BB23954566FB /* MessageBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
 		5415B509DF0BFE8BC8BC8D01 /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
-		5CBA51F7C347F674FFA3E1CC /* FirestoreREST.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreREST.swift; sourceTree = "<group>"; };
 		5E73DD8F15DDE10DA4C5B912 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		61F8E2D63FB546921E923292 /* GiphyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiphyService.swift; sourceTree = "<group>"; };
 		651B6BEC167D2F9EC93AAE76 /* ServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProtocols.swift; sourceTree = "<group>"; };
-		655202B8C2950C32FACE010E /* FirebaseAuthREST.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseAuthREST.swift; sourceTree = "<group>"; };
 		749F7C13424B1687597C4A28 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		77B13AC1DBF46D29F57527C1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		78B5230CDDB40C7C50837E7E /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -91,7 +86,6 @@
 		DD07E51E5A70084D794046C2 /* ProfileAvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileAvatarView.swift; sourceTree = "<group>"; };
 		E182081191E5B9B73A84D3C3 /* Entitlements.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Entitlements.entitlements; sourceTree = "<group>"; };
 		ED30CA7E2697C3B08934E36F /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
-		F147A03AB3747D18D51694CB /* AuthTokenStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthTokenStorage.swift; sourceTree = "<group>"; };
 		F6E336A615D9DEA900726E95 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -173,9 +167,6 @@
 			children = (
 				6F3A552B3317BD18913A77EE /* Protocols */,
 				0539751F4642BC3CC4A5B8F6 /* AuthService.swift */,
-				F147A03AB3747D18D51694CB /* AuthTokenStorage.swift */,
-				655202B8C2950C32FACE010E /* FirebaseAuthREST.swift */,
-				5CBA51F7C347F674FFA3E1CC /* FirestoreREST.swift */,
 				3C96C342A9CD017C35BDCC4E /* FirestoreService.swift */,
 				61F8E2D63FB546921E923292 /* GiphyService.swift */,
 				BE4C0D7F007100C95468E19D /* InvitationService.swift */,
@@ -332,7 +323,6 @@
 				898E9E82BF70F6207D447495 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
 				1C72CEACB5A36CF0DD42F87C /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -359,7 +349,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A5145FB9FF9EB8B52157E6E /* AuthService.swift in Sources */,
-				88C370EDF750E57495B8CC3C /* AuthTokenStorage.swift in Sources */,
 				820D0F1E994BA42685BD8CB2 /* AuthViewModel.swift in Sources */,
 				E124929B3244FF76BDC0CAF5 /* ChatView.swift in Sources */,
 				0AECC8E74074F4F9D8E234AA /* ChatViewModel.swift in Sources */,
@@ -369,8 +358,6 @@
 				96BDEEBF8C04F8F397749DC7 /* ConversationRowView.swift in Sources */,
 				603E9A17B35B492DD91D3E5F /* ConversationsViewModel.swift in Sources */,
 				C7D5F33C4462F6F40BD3B71F /* Extensions.swift in Sources */,
-				E55B8630645D26018AE106A2 /* FirebaseAuthREST.swift in Sources */,
-				70D45F8DF30BE42D3A9CA840 /* FirestoreREST.swift in Sources */,
 				D1CFEEF61D4B5B263DC347DE /* FirestoreService.swift in Sources */,
 				1F8B857F732D50667C71D3CF /* GiphyPickerView.swift in Sources */,
 				8ED5633C68705E74DC790ED9 /* GiphyService.swift in Sources */,
@@ -406,6 +393,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = XDchat/Resources/Entitlements.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -485,6 +473,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = XDchat/Resources/Entitlements.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
