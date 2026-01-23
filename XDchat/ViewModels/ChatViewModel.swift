@@ -159,9 +159,12 @@ class ChatViewModel: ObservableObject {
         )
 
         do {
+            print("[ChatViewModel] Calling firestoreService.sendMessage...")
             try await firestoreService.sendMessage(message)
+            print("[ChatViewModel] Message sent successfully!")
             await updateTypingStatus(isTyping: false)
         } catch {
+            print("[ChatViewModel] ERROR sending message: \(error)")
             errorMessage = error.localizedDescription
             messageText = tempText // Restore text on failure
         }

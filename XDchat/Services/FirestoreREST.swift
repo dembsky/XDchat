@@ -278,7 +278,10 @@ final class FirestoreREST {
             urlString += "?documentId=\(docId)"
         }
 
+        print("[FirestoreREST] createDocument URL: \(urlString)")
+
         guard let url = URL(string: urlString) else {
+            print("[FirestoreREST] ERROR: Invalid URL")
             throw FirestoreError.invalidURL
         }
 
@@ -291,13 +294,21 @@ final class FirestoreREST {
         let body: [String: Any] = ["fields": firestoreFields]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
+        print("[FirestoreREST] Sending POST request...")
+
         let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            print("[FirestoreREST] ERROR: Invalid response type")
             throw FirestoreError.invalidResponse
         }
 
+        print("[FirestoreREST] Response status: \(httpResponse.statusCode)")
+
         if httpResponse.statusCode != 200 {
+            if let responseStr = String(data: data, encoding: .utf8) {
+                print("[FirestoreREST] Error response: \(responseStr)")
+            }
             if let errorJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let error = errorJson["error"] as? [String: Any],
                let message = error["message"] as? String {
@@ -309,9 +320,12 @@ final class FirestoreREST {
         // Return document ID
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let name = json["name"] as? String {
-            return name.components(separatedBy: "/").last ?? ""
+            let docId = name.components(separatedBy: "/").last ?? ""
+            print("[FirestoreREST] Document created with ID: \(docId)")
+            return docId
         }
 
+        print("[FirestoreREST] WARNING: Could not extract document ID from response")
         return documentId ?? ""
     }
 
