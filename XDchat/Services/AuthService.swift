@@ -138,11 +138,25 @@ class AuthService: ObservableObject, AuthServiceProtocol {
                 return
             }
 
-            // Parse user data
+            // Parse user data - use session email as fallback
+            let firestoreEmail = userData["email"] as? String ?? ""
+            let email = firestoreEmail.isEmpty ? (session.email ?? "") : firestoreEmail
+
+            let firestoreDisplayName = userData["displayName"] as? String ?? ""
+            // Use email prefix as fallback display name if both are empty
+            let displayName: String
+            if !firestoreDisplayName.isEmpty {
+                displayName = firestoreDisplayName
+            } else if !email.isEmpty {
+                displayName = email.components(separatedBy: "@").first ?? email
+            } else {
+                displayName = ""
+            }
+
             let user = User(
                 id: userId,
-                email: userData["email"] as? String ?? "",
-                displayName: userData["displayName"] as? String ?? "",
+                email: email,
+                displayName: displayName,
                 isAdmin: userData["isAdmin"] as? Bool ?? false,
                 invitedBy: userData["invitedBy"] as? String,
                 canInvite: userData["canInvite"] as? Bool ?? false,
@@ -159,11 +173,19 @@ class AuthService: ObservableObject, AuthServiceProtocol {
                 self.lastError = nil
             }
 
-            // Update online status
+            // Update Firestore with correct data if fields were empty
+            var updateFields: [String: Any] = ["isOnline": true]
+            if firestoreEmail.isEmpty && !email.isEmpty {
+                updateFields["email"] = email
+            }
+            if firestoreDisplayName.isEmpty && !displayName.isEmpty {
+                updateFields["displayName"] = displayName
+            }
+
             try? await FirestoreREST.shared.updateDocument(
                 collection: "users",
                 documentId: userId,
-                fields: ["isOnline": true],
+                fields: updateFields,
                 idToken: session.idToken
             )
 
