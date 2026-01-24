@@ -8,6 +8,7 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
 
     private var db: Firestore { Firestore.firestore() }
     private var listeners: [String: ListenerRegistration] = [:]
+    private let listenersLock = NSLock()
 
     private init() {}
 
@@ -164,8 +165,11 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
         let listener = db.collection("conversations")
             .whereField("participants", arrayContains: userId)
             .order(by: "lastMessageAt", descending: true)
-            .addSnapshotListener { snapshot, error in
-                if error != nil {
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard self != nil else { return }
+
+                if let error = error {
+                    print("[FirestoreService] Conversations listener error: \(error.localizedDescription)")
                     return
                 }
 
@@ -177,7 +181,9 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
                 onChange(conversations)
             }
 
+        listenersLock.lock()
         listeners[listenerId] = listener
+        listenersLock.unlock()
         return listenerId
     }
 
@@ -260,15 +266,21 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
 
     func listenToMessages(
         for conversationId: String,
+        limit: Int = Constants.Pagination.defaultMessageLimit,
         onChange: @escaping ([Message]) -> Void
     ) -> String {
         let listenerId = UUID().uuidString
 
+        // Listen to the most recent messages only (with limit)
+        // Order by descending to get latest, then reverse for display
         let listener = db.collection("conversations")
             .document(conversationId)
             .collection("messages")
-            .order(by: "timestamp", descending: false)
-            .addSnapshotListener { snapshot, error in
+            .order(by: "timestamp", descending: true)
+            .limit(to: limit)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard self != nil else { return }
+
                 if let error = error {
                     print("[FirestoreService] Messages listener error: \(error.localizedDescription)")
                     return
@@ -276,13 +288,17 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
 
                 guard let snapshot = snapshot else { return }
 
-                let messages = snapshot.documents.compactMap { doc -> Message? in
-                    try? doc.data(as: Message.self)
-                }
-                onChange(messages)
+                // Reverse to get chronological order (oldest first)
+                let messages = snapshot.documents
+                    .compactMap { try? $0.data(as: Message.self) }
+                    .reversed()
+
+                onChange(Array(messages))
             }
 
+        listenersLock.lock()
         listeners[listenerId] = listener
+        listenersLock.unlock()
         return listenerId
     }
 
@@ -319,12 +335,16 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
     // MARK: - Listener Management
 
     func removeListener(id: String) {
+        listenersLock.lock()
         listeners[id]?.remove()
         listeners.removeValue(forKey: id)
+        listenersLock.unlock()
     }
 
     func removeAllListeners() {
+        listenersLock.lock()
         listeners.values.forEach { $0.remove() }
         listeners.removeAll()
+        listenersLock.unlock()
     }
 }

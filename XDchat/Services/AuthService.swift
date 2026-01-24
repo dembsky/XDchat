@@ -42,9 +42,8 @@ enum AuthError: LocalizedError {
 
 class AuthService: ObservableObject, AuthServiceProtocol {
     static let shared: AuthService = {
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
-        }
+        // Configure Firebase before Auth is accessed
+        FirebaseApp.configure()
         return AuthService()
     }()
 
@@ -74,8 +73,10 @@ class AuthService: ObservableObject, AuthServiceProtocol {
             if let firebaseUser = firebaseUser {
                 self.fetchUser(userId: firebaseUser.uid)
             } else {
-                self.currentUser = nil
-                self.isAuthenticated = false
+                Task { @MainActor in
+                    self.currentUser = nil
+                    self.isAuthenticated = false
+                }
             }
         }
     }
@@ -85,26 +86,41 @@ class AuthService: ObservableObject, AuthServiceProtocol {
     private func fetchUser(userId: String) {
         Task {
             do {
-                let document = try await db.collection("users").document(userId).getDocument()
+                let document = try await db.collection("users").document(userId).getDocument(source: .server)
 
-                if let user = try? document.data(as: User.self) {
-                    await MainActor.run {
-                        self.currentUser = user
-                        self.isAuthenticated = true
-                    }
-
-                    // Update online status
-                    try? await db.collection("users").document(userId).updateData([
-                        "isOnline": true
-                    ])
-                } else {
+                guard let data = document.data() else {
                     await MainActor.run {
                         self.currentUser = nil
                         self.isAuthenticated = false
                     }
+                    return
                 }
+
+                // Manual decoding to avoid Codable issues
+                let user = User(
+                    id: document.documentID,
+                    email: data["email"] as? String ?? "",
+                    displayName: data["displayName"] as? String ?? "Unknown",
+                    isAdmin: data["isAdmin"] as? Bool ?? false,
+                    invitedBy: data["invitedBy"] as? String,
+                    canInvite: data["canInvite"] as? Bool ?? false,
+                    avatarURL: data["avatarURL"] as? String,
+                    avatarData: data["avatarData"] as? String,
+                    isOnline: data["isOnline"] as? Bool ?? false,
+                    lastSeen: (data["lastSeen"] as? Timestamp)?.dateValue(),
+                    createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+                )
+                await MainActor.run {
+                    self.currentUser = user
+                    self.isAuthenticated = true
+                }
+
+                // Update online status
+                try? await db.collection("users").document(userId).updateData([
+                    "isOnline": true
+                ])
             } catch {
-                print("Error fetching user: \(error)")
+                print("[DEBUG] Error fetching user: \(error)")
                 await MainActor.run {
                     self.currentUser = nil
                     self.isAuthenticated = false
@@ -122,7 +138,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         invitationCode: String?
     ) async throws {
         await MainActor.run { isLoading = true }
-        defer { Task { await MainActor.run { self.isLoading = false } } }
+        defer { Task { @MainActor in self.isLoading = false } }
 
         // Check if this is the first user (will be admin)
         let isFirstUser = try await checkIfFirstUser()
@@ -201,7 +217,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
     func login(email: String, password: String) async throws {
         await MainActor.run { isLoading = true }
-        defer { Task { await MainActor.run { self.isLoading = false } } }
+        defer { Task { @MainActor in self.isLoading = false } }
 
         do {
             try await Auth.auth().signIn(withEmail: email, password: password)
@@ -212,6 +228,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
     // MARK: - Logout
 
+    @MainActor
     func logout() throws {
         updateOnlineStatus(false)
         try Auth.auth().signOut()

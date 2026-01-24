@@ -2,8 +2,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
-    @StateObject private var themeManager = ThemeManager()
-    @StateObject private var authService = AuthService.shared
+    @ObservedObject private var themeManager = ThemeManager.shared
+    @ObservedObject private var authService = AuthService.shared
 
     var body: some View {
         TabView {

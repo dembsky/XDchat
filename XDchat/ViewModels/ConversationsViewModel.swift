@@ -151,18 +151,15 @@ class ConversationsViewModel: ObservableObject {
     func startConversation(with user: User) async {
         guard let currentUserId = currentUserId,
               let otherUserId = user.id else {
-            print("[ConversationsViewModel] startConversation: missing currentUserId or otherUserId")
             return
         }
 
-        print("[ConversationsViewModel] Starting conversation with user: \(user.displayName) (\(otherUserId))")
         isLoading = true
         defer { isLoading = false }
 
         do {
             let participants = [currentUserId, otherUserId].sorted()
             let conversation = try await firestoreService.createConversation(participants: participants)
-            print("[ConversationsViewModel] Conversation created/found: \(conversation.id ?? "no-id")")
 
             // Cache the user
             users[otherUserId] = user
@@ -171,9 +168,7 @@ class ConversationsViewModel: ObservableObject {
             showNewConversationSheet = false
             searchQuery = ""
             searchResults = []
-            print("[ConversationsViewModel] selectedConversation set")
         } catch {
-            print("[ConversationsViewModel] Error creating conversation: \(error)")
             errorMessage = error.localizedDescription
         }
     }
@@ -213,20 +208,16 @@ class ConversationsViewModel: ObservableObject {
     // MARK: - Fetch All Users
 
     func fetchAllUsers() async {
-        // Pobierz currentUserId - jeśli nil, i tak spróbuj pobrać użytkowników
         let excludeUserId = currentUserId
 
         do {
             let fetchedUsers = try await firestoreService.getAllUsers()
-            // Filtruj bieżącego użytkownika jeśli znany
             if let excludeId = excludeUserId {
                 allUsers = fetchedUsers.filter { $0.id != excludeId }
             } else {
                 allUsers = fetchedUsers
             }
-            print("[ConversationsViewModel] Loaded \(allUsers.count) users")
         } catch {
-            print("[ConversationsViewModel] Error fetching users: \(error)")
             errorMessage = "Failed to load users: \(error.localizedDescription)"
         }
     }

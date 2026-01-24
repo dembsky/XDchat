@@ -1,14 +1,14 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
-enum MessageType: String, Codable {
+enum MessageType: String, Codable, Sendable {
     case text
     case gif
     case sticker
     case emoji
 }
 
-struct Message: Identifiable, Codable, Equatable {
+struct Message: Identifiable, Codable, Equatable, Sendable {
     @DocumentID var id: String?
     let conversationId: String
     let senderId: String

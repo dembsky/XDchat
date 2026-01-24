@@ -128,8 +128,12 @@ class InvitationService: ObservableObject, InvitationServiceProtocol {
 
                 guard let snapshot = snapshot else { return }
 
-                self.myInvitations = snapshot.documents.compactMap {
+                let invitations = snapshot.documents.compactMap {
                     try? $0.data(as: Invitation.self)
+                }
+
+                Task { @MainActor in
+                    self.myInvitations = invitations
                 }
             }
     }

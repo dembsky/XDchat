@@ -1,7 +1,7 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
-struct User: Identifiable, Codable, Equatable {
+struct User: Identifiable, Codable, Equatable, Sendable {
     @DocumentID var id: String?
     let email: String
     var displayName: String

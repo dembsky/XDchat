@@ -1,7 +1,7 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
-struct Invitation: Identifiable, Codable, Equatable {
+struct Invitation: Identifiable, Codable, Equatable, Sendable {
     @DocumentID var id: String?
     let code: String
     let createdBy: String
@@ -38,7 +38,7 @@ struct Invitation: Identifiable, Codable, Equatable {
     }
 
     static func generateCode(length: Int = 6) -> String {
-        let characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-        return String((0..<length).map { _ in characters.randomElement()! })
+        let characters = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+        return String((0..<length).compactMap { _ in characters.randomElement() })
     }
 }

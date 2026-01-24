@@ -166,6 +166,11 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: Theme.Spacing.xs) {
+                    // Load more button at top
+                    if viewModel.hasMoreMessages && !viewModel.messages.isEmpty {
+                        loadMoreButton
+                    }
+
                     ForEach(Array(viewModel.messages.enumerated()), id: \.element.id) { index, message in
                         VStack(spacing: Theme.Spacing.xs) {
                             if viewModel.shouldShowTimestamp(for: index) {
@@ -196,6 +201,31 @@ struct ChatView: View {
                 scrollToBottom()
             }
         }
+    }
+
+    private var loadMoreButton: some View {
+        Button {
+            Task {
+                await viewModel.loadOlderMessages()
+            }
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                if viewModel.isLoadingOlder {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                } else {
+                    Image(systemName: "arrow.up.circle")
+                        .font(.system(size: 14))
+                }
+                Text(viewModel.isLoadingOlder ? "Loading..." : "Load older messages")
+                    .font(Theme.Typography.caption)
+            }
+            .foregroundColor(Theme.Colors.accent)
+            .padding(.vertical, Theme.Spacing.sm)
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isLoadingOlder)
+        .frame(maxWidth: .infinity)
     }
 
     private func timestampView(for message: Message) -> some View {

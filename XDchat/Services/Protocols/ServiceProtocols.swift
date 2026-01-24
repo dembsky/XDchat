@@ -9,7 +9,7 @@ protocol AuthServiceProtocol: ObservableObject {
     var isLoading: Bool { get }
 
     func login(email: String, password: String) async throws
-    func logout() throws
+    @MainActor func logout() throws
     func register(email: String, password: String, displayName: String, invitationCode: String?) async throws
     func resetPassword(email: String) async throws
     func updateOnlineStatus(_ isOnline: Bool)
@@ -36,7 +36,8 @@ protocol FirestoreServiceProtocol {
     // Messages
     func sendMessage(_ message: Message) async throws
     func getMessages(for conversationId: String, limit: Int) async throws -> [Message]
-    func listenToMessages(for conversationId: String, onChange: @escaping ([Message]) -> Void) -> String
+    func listenToMessages(for conversationId: String, limit: Int, onChange: @escaping ([Message]) -> Void) -> String
+    func getOlderMessages(for conversationId: String, before timestamp: Date, limit: Int) async throws -> [Message]
 
     // Typing
     func setTypingStatus(conversationId: String, userId: String, isTyping: Bool) async throws
@@ -75,7 +76,7 @@ protocol GiphyServiceProtocol: ObservableObject {
 
     func fetchTrending(limit: Int, offset: Int) async throws -> [GiphyImage]
     func search(query: String, limit: Int, offset: Int) async throws -> [GiphyImage]
-    func clearSearch()
+    @MainActor func clearSearch()
 }
 
 // MARK: - Default Parameter Extensions
