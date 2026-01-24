@@ -156,6 +156,8 @@ extension Color {
 // MARK: - Theme Manager
 
 class ThemeManager: ObservableObject {
+    static let shared = ThemeManager()
+
     @AppStorage("selectedTheme") var selectedTheme: String = "system" {
         didSet {
             objectWillChange.send()

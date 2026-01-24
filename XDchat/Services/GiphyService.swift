@@ -1,6 +1,6 @@
 import Foundation
 
-struct GiphyImage: Identifiable, Equatable {
+struct GiphyImage: Identifiable, Equatable, Sendable {
     let id: String
     let url: URL
     let previewUrl: URL
@@ -198,6 +198,7 @@ class GiphyService: ObservableObject, GiphyServiceProtocol {
 
     // MARK: - Clear Results
 
+    @MainActor
     func clearSearch() {
         searchResults = []
     }

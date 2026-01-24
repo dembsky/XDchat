@@ -11,6 +11,8 @@ class ChatViewModel: ObservableObject {
     @Published var showGiphyPicker = false
     @Published var showEmojiPicker = false
     @Published var otherUserIsTyping = false
+    @Published var isLoadingOlder = false
+    @Published var hasMoreMessages = true
 
     let conversation: Conversation
 
@@ -20,6 +22,8 @@ class ChatViewModel: ObservableObject {
     private var conversationListenerId: String?
     private var typingDebounceTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
+    private var olderMessages: [Message] = []
+    private var listenerMessages: [Message] = []
 
     var currentUserId: String? {
         authService.currentUser?.id
@@ -58,15 +62,67 @@ class ChatViewModel: ObservableObject {
     func startListening() {
         guard let conversationId = conversationId else { return }
 
-        // Listen to messages
-        messagesListenerId = firestoreService.listenToMessages(for: conversationId) { [weak self] messages in
+        // Listen to most recent messages (with limit for performance)
+        messagesListenerId = firestoreService.listenToMessages(
+            for: conversationId,
+            limit: Constants.Pagination.defaultMessageLimit
+        ) { [weak self] messages in
             Task { @MainActor in
-                self?.messages = messages
+                guard let self = self else { return }
+                self.listenerMessages = messages
+                self.mergeMessages()
             }
         }
 
         // Listen to conversation for typing indicator
         listenToTypingStatus()
+    }
+
+    private func mergeMessages() {
+        // Combine older (paginated) messages with listener messages
+        // Listener messages are the most recent, older messages are historical
+        var combined = olderMessages
+
+        // Add listener messages that aren't already in older messages
+        for msg in listenerMessages {
+            if !combined.contains(where: { $0.id == msg.id }) {
+                combined.append(msg)
+            }
+        }
+
+        // Sort by timestamp (oldest first)
+        combined.sort { $0.timestamp < $1.timestamp }
+        messages = combined
+    }
+
+    func loadOlderMessages() async {
+        guard let conversationId = conversationId,
+              !isLoadingOlder,
+              hasMoreMessages else { return }
+
+        // Get the oldest message timestamp from our current messages
+        guard let oldestTimestamp = messages.first?.timestamp else { return }
+
+        isLoadingOlder = true
+        defer { isLoadingOlder = false }
+
+        do {
+            let older = try await firestoreService.getOlderMessages(
+                for: conversationId,
+                before: oldestTimestamp,
+                limit: Constants.Pagination.defaultMessageLimit
+            )
+
+            if older.isEmpty {
+                hasMoreMessages = false
+            } else {
+                // Prepend older messages
+                olderMessages = older + olderMessages
+                mergeMessages()
+            }
+        } catch {
+            errorMessage = "Failed to load older messages"
+        }
     }
 
     func stopListening() {
@@ -78,6 +134,11 @@ class ChatViewModel: ObservableObject {
             firestoreService.removeListener(id: listenerId)
             conversationListenerId = nil
         }
+
+        // Reset pagination state
+        olderMessages = []
+        listenerMessages = []
+        hasMoreMessages = true
 
         // Clear typing status
         Task {

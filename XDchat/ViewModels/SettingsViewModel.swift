@@ -47,7 +47,7 @@ class SettingsViewModel: ObservableObject {
             guard let self = self else { return }
             if response == .OK, let url = panel.url {
                 if let image = NSImage(contentsOf: url) {
-                    DispatchQueue.main.async {
+                    Task { @MainActor in
                         self.openCropperWindow(with: image)
                     }
                 }

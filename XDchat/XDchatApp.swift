@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseCore
+import FirebaseFirestore
 import UniformTypeIdentifiers
 import Sparkle
 
@@ -21,7 +22,7 @@ struct XDchatApp: App {
             CommandMenu("Chat") {
                 Button("New Conversation") {
                     NotificationCenter.default.post(
-                        name: .newConversation,
+                        name: Constants.Notifications.newConversation,
                         object: nil
                     )
                 }
@@ -31,7 +32,7 @@ struct XDchatApp: App {
 
                 Button("Search") {
                     NotificationCenter.default.post(
-                        name: .focusSearch,
+                        name: Constants.Notifications.focusSearch,
                         object: nil
                     )
                 }
@@ -45,7 +46,7 @@ struct XDchatApp: App {
             CommandGroup(after: .appSettings) {
                 Button("Invite Users...") {
                     NotificationCenter.default.post(
-                        name: .showInviteUsers,
+                        name: Constants.Notifications.showInviteUsers,
                         object: nil
                     )
                 }
@@ -74,8 +75,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        FirebaseApp.configure()
+        // Firebase is configured in AuthService.shared
+        configureFirestore()
         applyAppIcon()
+    }
+
+    private func configureFirestore() {
+        let settings = FirestoreSettings()
+
+        // Enable offline persistence with 100 MB cache
+        settings.cacheSettings = PersistentCacheSettings(sizeBytes: 100 * 1024 * 1024 as NSNumber)
+
+        Firestore.firestore().settings = settings
     }
 
     private func applyAppIcon() {
@@ -123,10 +134,3 @@ struct CheckForUpdatesView: View {
     }
 }
 
-// MARK: - Notification Names
-
-extension Notification.Name {
-    static let newConversation = Notification.Name("newConversation")
-    static let focusSearch = Notification.Name("focusSearch")
-    static let showInviteUsers = Notification.Name("showInviteUsers")
-}

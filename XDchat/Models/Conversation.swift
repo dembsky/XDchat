@@ -1,7 +1,7 @@
 import Foundation
-import FirebaseFirestore
+@preconcurrency import FirebaseFirestore
 
-struct Conversation: Identifiable, Codable, Equatable {
+struct Conversation: Identifiable, Codable, Equatable, Sendable {
     @DocumentID var id: String?
     let participants: [String]
     var lastMessage: String?

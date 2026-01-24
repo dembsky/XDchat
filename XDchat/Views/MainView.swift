@@ -3,7 +3,7 @@ import SwiftUI
 struct MainView: View {
     @StateObject private var authViewModel = AuthViewModel()
     @StateObject private var conversationsViewModel = ConversationsViewModel()
-    @StateObject private var themeManager = ThemeManager()
+    @ObservedObject private var themeManager = ThemeManager.shared
     @AppStorage("profileImageData") private var profileImageData: Data = Data()
 
     @State private var showSettings = false
