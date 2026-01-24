@@ -169,7 +169,9 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
                 guard self != nil else { return }
 
                 if let error = error {
+                    #if DEBUG
                     print("[FirestoreService] Conversations listener error: \(error.localizedDescription)")
+                    #endif
                     return
                 }
 
@@ -282,7 +284,9 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
                 guard self != nil else { return }
 
                 if let error = error {
+                    #if DEBUG
                     print("[FirestoreService] Messages listener error: \(error.localizedDescription)")
+                    #endif
                     return
                 }
 

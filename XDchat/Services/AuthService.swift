@@ -120,7 +120,9 @@ class AuthService: ObservableObject, AuthServiceProtocol {
                     "isOnline": true
                 ])
             } catch {
+                #if DEBUG
                 print("[DEBUG] Error fetching user: \(error)")
+                #endif
                 await MainActor.run {
                     self.currentUser = nil
                     self.isAuthenticated = false
@@ -271,7 +273,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
 
     private func mapFirebaseError(_ error: NSError) -> AuthError {
         guard let errorCode = AuthErrorCode(rawValue: error.code) else {
-            return .unknown(error.localizedDescription)
+            return .unknown("An unexpected error occurred. Please try again.")
         }
 
         switch errorCode {
@@ -288,7 +290,7 @@ class AuthService: ObservableObject, AuthServiceProtocol {
         case .networkError:
             return .networkError
         default:
-            return .unknown(error.localizedDescription)
+            return .unknown("An unexpected error occurred. Please try again.")
         }
     }
 }
