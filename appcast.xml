@@ -6,6 +6,27 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 4.0.3</title>
+            <description><![CDATA[
+                <h2>XDchat 4.0.3</h2>
+                <ul>
+                    <li>Fixed Sparkle auto-update installer</li>
+                    <li>Fixed user search</li>
+                    <li>Fixed "Unknown" display name</li>
+                    <li>Improved search highlight color</li>
+                </ul>
+            ]]></description>
+            <pubDate>Sun, 26 Jan 2026 10:00:00 +0000</pubDate>
+            <sparkle:version>27</sparkle:version>
+            <sparkle:shortVersionString>4.0.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v4.0.3/XDchat-4.0.3.zip"
+                sparkle:edSignature="Gn1dpY6UKsxrVeHaKPyQPMBPNrE/qKpiINGTQjY9RIaEG9WqRyNtxDFB9PST9FhxxulaWHqjcXZCs8wkAZ7rAg=="
+                length="14015702"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 4.0.2</title>
             <description><![CDATA[
                 <h2>XDchat 4.0.2</h2>
