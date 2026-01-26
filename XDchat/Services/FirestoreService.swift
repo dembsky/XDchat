@@ -38,7 +38,16 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
                 .limit(to: 10)
                 .getDocuments()
 
-            let users = snapshot.documents.compactMap { try? $0.data(as: User.self) }
+            let users = snapshot.documents.compactMap { doc -> User? in
+                do {
+                    return try doc.data(as: User.self)
+                } catch {
+                    #if DEBUG
+                    print("[DEBUG] Failed to decode user \(doc.documentID): \(error)")
+                    #endif
+                    return nil
+                }
+            }
             allUsers.append(contentsOf: users)
         }
 
@@ -51,7 +60,16 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
             .limit(to: 50)
             .getDocuments()
 
-        return snapshot.documents.compactMap { try? $0.data(as: User.self) }
+        return snapshot.documents.compactMap { doc -> User? in
+            do {
+                return try doc.data(as: User.self)
+            } catch {
+                #if DEBUG
+                print("[DEBUG] Failed to decode user \(doc.documentID): \(error)")
+                #endif
+                return nil
+            }
+        }
     }
 
     func searchUsers(query: String, excludingUserId: String) async throws -> [User] {

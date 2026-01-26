@@ -66,7 +66,7 @@ struct MessageBubbleView: View {
             }
         }
         .padding(.vertical, isHighlighted ? 4 : 0)
-        .background(isHighlighted ? Color.yellow.opacity(0.3) : Color.clear)
+        .background(isHighlighted ? Theme.Colors.accentLight.opacity(0.2) : Color.clear)
         .cornerRadius(8)
         .onAppear {
             if containsXD && !hasAnimated {
