@@ -107,8 +107,22 @@ class ConversationsViewModel: ObservableObject {
                     users[userId] = user
                 }
             }
+
+            // Fallback: fetch individually any users that weren't returned by batch query
+            let fetchedIds = Set(fetchedUsers.compactMap { $0.id })
+            let missingIds = userIdsToFetch.subtracting(fetchedIds)
+            for userId in missingIds {
+                if let user = try? await firestoreService.getUser(userId: userId) {
+                    users[userId] = user
+                }
+            }
         } catch {
-            // Silently handle user fetch errors
+            // Batch fetch failed - try fetching users individually
+            for userId in userIdsToFetch {
+                if let user = try? await firestoreService.getUser(userId: userId) {
+                    users[userId] = user
+                }
+            }
         }
     }
 
@@ -141,6 +155,9 @@ class ConversationsViewModel: ObservableObject {
             } catch {
                 if !Task.isCancelled {
                     isSearching = false
+                    #if DEBUG
+                    print("[DEBUG] Search failed: \(error)")
+                    #endif
                 }
             }
         }
