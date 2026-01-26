@@ -1,5 +1,9 @@
 # XDchat
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%2015.0+-orange.svg)](https://www.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-5.9-F05138.svg)](https://swift.org)
+
 Native macOS chat application built with SwiftUI and Firebase.
 
 ## Features
@@ -9,6 +13,11 @@ Native macOS chat application built with SwiftUI and Firebase.
 - Dark/Light mode with Messenger-inspired design
 - Admin controls for user management
 - Typing indicators and online status
+- Auto-updates via Sparkle
+
+## Screenshots
+
+<!-- Add screenshots here -->
 
 ## Requirements
 
@@ -18,135 +27,82 @@ Native macOS chat application built with SwiftUI and Firebase.
 - Firebase account
 - Giphy API key
 
-## Setup Instructions
+## Getting Started
 
-### 1. Create Xcode Project
+### 1. Clone the Repository
 
-1. Open Xcode and create a new project
-2. Select **macOS** → **App**
-3. Configure:
-   - Product Name: `XDchat`
-   - Team: Your team
-   - Organization Identifier: Your identifier (e.g., `com.yourname`)
-   - Interface: **SwiftUI**
-   - Language: **Swift**
-   - Storage: **None**
-4. Save the project in your desired directory (overwrite if prompted)
-
-### 2. Add Source Files
-
-After creating the project:
-1. Delete the auto-generated `ContentView.swift` and any other default files
-2. Drag the `XDchat` folder (with all Swift files) into the Xcode project navigator
-3. Make sure "Copy items if needed" is unchecked and "Create groups" is selected
-
-### 3. Add Dependencies via Swift Package Manager
-
-1. In Xcode: **File** → **Add Package Dependencies...**
-2. Add these packages:
-
-**Firebase SDK:**
+```bash
+git clone https://github.com/dembsky/XDchat.git
+cd XDchat
 ```
-https://github.com/firebase/firebase-ios-sdk
-```
-- Select products: `FirebaseAuth`, `FirebaseFirestore`
 
-**SDWebImageSwiftUI (for GIF support):**
-```
-https://github.com/SDWebImage/SDWebImageSwiftUI
-```
-- Select product: `SDWebImageSwiftUI`
+### 2. Configure API Keys
 
-### 4. Configure Firebase
+Copy the example config and fill in your values:
+
+```bash
+cp Config.xcconfig.example Config.xcconfig
+```
+
+Edit `Config.xcconfig` and set your Giphy API key:
+
+```
+GIPHY_API_KEY = your_giphy_api_key_here
+```
+
+Get a free API key at [developers.giphy.com](https://developers.giphy.com).
+
+### 3. Configure Firebase
 
 1. Go to [Firebase Console](https://console.firebase.google.com)
-2. Create a new project named "XDchat"
-3. Add an Apple app:
-   - Platform: macOS
-   - Bundle ID: Your bundle identifier
+2. Create a new project
+3. Add a macOS app with your bundle identifier
 4. Download `GoogleService-Info.plist`
-5. Add it to the Xcode project (drag into the project navigator)
+5. Place it in `XDchat/Resources/`
 
-### 5. Enable Firebase Services
+#### Enable Firebase Services
 
 In Firebase Console:
-1. **Authentication**:
-   - Go to Authentication → Sign-in method
-   - Enable **Email/Password**
 
-2. **Firestore Database**:
-   - Go to Firestore Database → Create Database
-   - Start in **production mode**
-   - Choose a location
+**Authentication:**
+- Go to Authentication > Sign-in method
+- Enable **Email/Password**
 
-3. **Firestore Security Rules**:
-   Copy these rules in Firestore → Rules:
+**Firestore Database:**
+- Go to Firestore Database > Create Database
+- Start in **production mode**
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Users collection
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
+**Firestore Security Rules:**
 
-    // Invitations collection
-    match /invitations/{invitationId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null &&
-        get(/databases/$(database)/documents/invitations/$(invitationId)).data.createdBy == request.auth.uid;
-    }
+Deploy the included rules:
 
-    // Conversations collection
-    match /conversations/{conversationId} {
-      allow read: if request.auth != null &&
-        request.auth.uid in resource.data.participants;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null &&
-        request.auth.uid in resource.data.participants;
-
-      // Messages subcollection
-      match /messages/{messageId} {
-        allow read: if request.auth != null &&
-          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
-        allow create: if request.auth != null &&
-          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
-      }
-    }
-  }
-}
+```bash
+npm install -g firebase-tools
+firebase login
+firebase init firestore  # select your project
+firebase deploy --only firestore:rules
 ```
 
-### 6. Configure Giphy API
+Or copy the rules from `firestore.rules` into the Firebase Console manually.
 
-1. Go to [Giphy Developers](https://developers.giphy.com)
-2. Create an account and app
-3. Copy your API key
-4. In the app, go to **Settings** → **API Keys** → Enter your Giphy API key
+### 4. Open in Xcode
 
-### 7. Build Settings
+```bash
+open XDchat.xcodeproj
+```
 
-Ensure these settings in your Xcode project:
-- **Deployment Target**: macOS 15.0
-- **Swift Language Version**: 5.9
+Xcode will automatically resolve Swift Package dependencies (Firebase, SDWebImageSwiftUI, Sparkle).
 
-### 8. Build and Run
+### 5. Build and Run
 
 1. Select your Mac as the run destination
-2. Press **Cmd+R** to build and run
+2. Press **Cmd+R**
 
-## First Run
+### First Run
 
 1. **First user = Admin**: The first user to register becomes the admin
 2. Register without an invitation code (only for the first user)
-3. As admin, you can:
-   - Invite other users by generating invitation codes
-   - Grant/revoke invite permissions to other users
-   - Manage all users
+3. As admin, you can generate invitation codes for other users
 
 ## Project Structure
 
@@ -176,8 +132,9 @@ XDchat/
 │   └── InvitationService.swift
 ├── Utilities/                # Helpers
 │   ├── Theme.swift
-│   └── Extensions.swift
-└── Resources/                # Assets
+│   ├── Extensions.swift
+│   └── Constants.swift
+└── Resources/
     ├── Assets.xcassets/
     ├── Info.plist
     └── Entitlements.entitlements
@@ -185,22 +142,57 @@ XDchat/
 
 ## Architecture
 
-- **MVVM Pattern**: ViewModels manage state and business logic
-- **Services Layer**: Singleton services handle Firebase and API communication
-- **Real-time Updates**: Firestore listeners for live data sync
-- **Theme System**: Adaptive colors for Dark/Light mode
+- **MVVM Pattern** - ViewModels manage state and business logic
+- **Services Layer** - Singleton services handle Firebase and API communication
+- **Real-time Updates** - Firestore listeners for live data sync
+- **Theme System** - Adaptive colors for Dark/Light mode
+
+## Distribution & Auto-Updates
+
+XDchat uses [Sparkle](https://sparkle-project.org/) for auto-updates outside the App Store.
+
+If you fork this project for your own distribution:
+
+1. Generate your own Sparkle EdDSA key pair:
+   ```bash
+   ./build/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys
+   ```
+2. Update `SUPublicEDKey` in `Info.plist` with your public key
+3. Update `SUFeedURL` in `Info.plist` to point to your own appcast
+4. Update `PRODUCT_BUNDLE_IDENTIFIER` to your own bundle ID
+5. Sign with your own Developer ID for notarized distribution
+
+## Build for Distribution
+
+To build a signed and notarized release:
+
+```bash
+export TEAM_ID="your_team_id"
+export DEVELOPER_ID="Developer ID Application: Your Name (TEAM_ID)"
+export APPLE_ID="your_apple_id@example.com"
+export APP_SPECIFIC_PASSWORD="your_app_specific_password"
+
+./scripts/build-release.sh
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Troubleshooting
 
 ### Firebase not configured
-Make sure `GoogleService-Info.plist` is added to your project and contains valid credentials.
+Make sure `GoogleService-Info.plist` is in `XDchat/Resources/` and contains valid credentials.
 
 ### GIFs not loading
-Check that your Giphy API key is configured in Settings.
+Check that your Giphy API key is set in `Config.xcconfig`.
 
 ### Authentication errors
 Verify that Email/Password authentication is enabled in Firebase Console.
 
+### Build errors with dependencies
+Try: File > Packages > Reset Package Caches in Xcode.
+
 ## License
 
-This project is for educational purposes.
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
