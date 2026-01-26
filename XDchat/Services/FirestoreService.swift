@@ -48,6 +48,7 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
     func getAllUsers() async throws -> [User] {
         let snapshot = try await db.collection("users")
             .order(by: "displayName")
+            .limit(to: 50)
             .getDocuments()
 
         return snapshot.documents.compactMap { try? $0.data(as: User.self) }
