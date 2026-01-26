@@ -43,7 +43,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: XDchat/Resources/Entitlements.entitlements
         PRODUCT_BUNDLE_IDENTIFIER: com.xdchat.app
         PRODUCT_NAME: XDchat
-        GIPHY_API_KEY: REDACTED_GIPHY_KEY
+        GIPHY_API_KEY: $(GIPHY_API_KEY)
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_HARDENED_RUNTIME: YES

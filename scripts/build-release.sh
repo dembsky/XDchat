@@ -7,9 +7,9 @@ set -e
 
 # Configuration
 APP_NAME="XDchat"
-TEAM_ID="SFBLDACL65"
-DEVELOPER_ID="REDACTED_DEVELOPER_ID"
-APPLE_ID="REDACTED_EMAIL"
+TEAM_ID="${TEAM_ID:?Set TEAM_ID environment variable}"
+DEVELOPER_ID="${DEVELOPER_ID:?Set DEVELOPER_ID environment variable}"
+APPLE_ID="${APPLE_ID:?Set APPLE_ID environment variable}"
 
 # Paths
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"

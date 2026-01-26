@@ -50,6 +50,7 @@
 
 /* Begin PBXFileReference section */
 		02793CDBEC1CE32ADECFC27C /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		0539751F4642BC3CC4A5B8F6 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		05A4613D07471970A11FB5CF /* InvitationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvitationViewModel.swift; sourceTree = "<group>"; };
 		0A04B28FBE45A8701BC4A6B0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -141,6 +142,7 @@
 		4EBADC6170921764117E33D7 = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* Config.xcconfig */,
 				9A30792BFC1D4B056F9867B3 /* XDchat */,
 				714A4F09504FB3A1E0B16B0A /* Products */,
 			);
@@ -406,6 +408,7 @@
 /* Begin XCBuildConfiguration section */
 		2882309FFDDC8A5520F420C9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1B2C3D4E5F6A7B8C9D0E1F2 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = XDchat/Resources/Entitlements.entitlements;
@@ -426,7 +429,6 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GIPHY_API_KEY = REDACTED_GIPHY_KEY;
 				INFOPLIST_FILE = XDchat/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -503,6 +505,7 @@
 		};
 		94E12FC467FFEB7D2FA58FF5 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1B2C3D4E5F6A7B8C9D0E1F2 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = XDchat/Resources/Entitlements.entitlements;
@@ -523,7 +526,6 @@
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GIPHY_API_KEY = REDACTED_GIPHY_KEY;
 				INFOPLIST_FILE = XDchat/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -31,7 +31,7 @@ Native macOS chat application built with SwiftUI and Firebase.
    - Interface: **SwiftUI**
    - Language: **Swift**
    - Storage: **None**
-4. Save the project in the `/Users/dembsky/Documents/XDchat` directory (overwrite if prompted)
+4. Save the project in your desired directory (overwrite if prompted)
 
 ### 2. Add Source Files
 

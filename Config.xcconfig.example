@@ -1,0 +1,4 @@
+// Configuration settings
+// Copy this file to Config.xcconfig and fill in your values
+
+GIPHY_API_KEY = YOUR_GIPHY_API_KEY_HERE

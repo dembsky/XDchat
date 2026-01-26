@@ -13,7 +13,7 @@ Zbudowac aplikacje XDchat w trybie ktory pozwoli ja uruchomic na dowolnym Macu b
 ## Komendy do wyprobowania
 
 ```bash
-cd /Users/dembsky/Documents/XDchat
+cd /path/to/XDchat
 
 # Build bez code signing
 xcodebuild -scheme XDchat -configuration Release -derivedDataPath ./build \

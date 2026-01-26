@@ -81,3 +81,9 @@ fastlane/test_output
 
 # Sparkle private key - NEVER COMMIT
 sparkle_private_key.txt
+
+# Local configuration with secrets
+Config.xcconfig
+
+# Firebase project config
+.firebaserc
