@@ -15,9 +15,11 @@ Native macOS chat application built with SwiftUI and Firebase.
 - Typing indicators and online status
 - Auto-updates via Sparkle
 
-## Screenshots
+## Screenshot
 
-<!-- Add screenshots here -->
+<p align="center">
+  <img src=".github/assets/screenshot-dark.png" alt="XDchat Dark Mode" width="700">
+</p>
 
 ## Requirements
 
