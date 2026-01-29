@@ -38,11 +38,6 @@ class ChatViewModel: ObservableObject {
         setupTypingDebounce()
     }
 
-    nonisolated func cleanup() {
-        // Called when view disappears - cleanup is handled by stopListening()
-        // This is nonisolated to work properly with Swift concurrency
-    }
-
     // MARK: - Setup
 
     private func setupTypingDebounce() {
@@ -126,6 +121,20 @@ class ChatViewModel: ObservableObject {
     }
 
     func stopListening() {
+        // Clear typing status BEFORE removing listeners
+        // Use fire-and-forget Firestore write (writes to local cache immediately)
+        if let conversationId = conversationId, let userId = currentUserId {
+            typingDebounceTask?.cancel()
+            typingDebounceTask = nil
+            Task {
+                try? await firestoreService.setTypingStatus(
+                    conversationId: conversationId,
+                    userId: userId,
+                    isTyping: false
+                )
+            }
+        }
+
         if let listenerId = messagesListenerId {
             firestoreService.removeListener(id: listenerId)
             messagesListenerId = nil
@@ -139,23 +148,18 @@ class ChatViewModel: ObservableObject {
         olderMessages = []
         listenerMessages = []
         hasMoreMessages = true
-
-        // Clear typing status
-        Task {
-            await updateTypingStatus(isTyping: false)
-        }
     }
 
     private func listenToTypingStatus() {
         guard let conversationId = conversationId,
               let currentUserId = currentUserId else { return }
 
-        conversationListenerId = firestoreService.listenToConversations(for: currentUserId) { [weak self] conversations in
+        conversationListenerId = firestoreService.listenToConversation(id: conversationId) { [weak self] conversation in
             guard let self = self else { return }
 
             Task { @MainActor in
-                if let updatedConversation = conversations.first(where: { $0.id == conversationId }) {
-                    let typingUsers = updatedConversation.typingUsers.filter { $0 != currentUserId }
+                if let conversation = conversation {
+                    let typingUsers = conversation.typingUsers.filter { $0 != currentUserId }
                     self.otherUserIsTyping = !typingUsers.isEmpty
                 }
             }
@@ -177,9 +181,8 @@ class ChatViewModel: ObservableObject {
               let senderId = currentUserId else { return }
 
         // Validate message length
-        let maxLength = 10000
-        guard text.count <= maxLength else {
-            errorMessage = "Message is too long (max \(maxLength) characters)"
+        guard text.count <= Constants.Validation.maxMessageLength else {
+            errorMessage = "Message is too long (max \(Constants.Validation.maxMessageLength) characters)"
             return
         }
 

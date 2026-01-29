@@ -2,6 +2,7 @@ import Foundation
 import FirebaseCore
 import FirebaseFirestore
 import Combine
+import os.log
 
 class FirestoreService: ObservableObject, FirestoreServiceProtocol {
     static let shared = FirestoreService()
@@ -42,9 +43,7 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
                 do {
                     return try doc.data(as: User.self)
                 } catch {
-                    #if DEBUG
-                    print("[DEBUG] Failed to decode user \(doc.documentID): \(error)")
-                    #endif
+                    Logger.firestore.debug("Failed to decode user \(doc.documentID): \(error.localizedDescription)")
                     return nil
                 }
             }
@@ -64,9 +63,7 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
             do {
                 return try doc.data(as: User.self)
             } catch {
-                #if DEBUG
-                print("[DEBUG] Failed to decode user \(doc.documentID): \(error)")
-                #endif
+                Logger.firestore.debug("Failed to decode user \(doc.documentID): \(error.localizedDescription)")
                 return nil
             }
         }
@@ -148,22 +145,41 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
     }
 
     func deleteConversation(conversationId: String) async throws {
-        // Delete all messages in the conversation first
-        let messagesSnapshot = try await db.collection("conversations")
+        let messagesCollection = db.collection("conversations")
             .document(conversationId)
             .collection("messages")
-            .getDocuments()
 
-        let batch = db.batch()
+        // Delete messages in batches of 450 (Firestore batch limit is 500)
+        let batchSize = 450
+        var hasMore = true
 
-        for document in messagesSnapshot.documents {
-            batch.deleteDocument(document.reference)
+        while hasMore {
+            let snapshot = try await messagesCollection
+                .limit(to: batchSize)
+                .getDocuments()
+
+            if snapshot.documents.isEmpty {
+                hasMore = false
+                break
+            }
+
+            let batch = db.batch()
+            for document in snapshot.documents {
+                batch.deleteDocument(document.reference)
+            }
+            try await batch.commit()
+
+            hasMore = snapshot.documents.count == batchSize
         }
 
-        // Delete the conversation document
-        batch.deleteDocument(db.collection("conversations").document(conversationId))
+        // Delete the conversation document itself
+        try await db.collection("conversations").document(conversationId).delete()
+    }
 
-        try await batch.commit()
+    func getConversation(id: String) async throws -> Conversation? {
+        let document = try await db.collection("conversations").document(id).getDocument()
+        guard document.exists else { return nil }
+        return try document.data(as: Conversation.self)
     }
 
     func getConversations(for userId: String) async throws -> [Conversation] {
@@ -188,9 +204,7 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
                 guard self != nil else { return }
 
                 if let error = error {
-                    #if DEBUG
-                    print("[FirestoreService] Conversations listener error: \(error.localizedDescription)")
-                    #endif
+                    Logger.firestore.error("Conversations listener error: \(error.localizedDescription)")
                     return
                 }
 
@@ -303,9 +317,7 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
                 guard self != nil else { return }
 
                 if let error = error {
-                    #if DEBUG
-                    print("[FirestoreService] Messages listener error: \(error.localizedDescription)")
-                    #endif
+                    Logger.firestore.error("Messages listener error: \(error.localizedDescription)")
                     return
                 }
 
@@ -317,6 +329,33 @@ class FirestoreService: ObservableObject, FirestoreServiceProtocol {
                     .reversed()
 
                 onChange(Array(messages))
+            }
+
+        listenersLock.lock()
+        listeners[listenerId] = listener
+        listenersLock.unlock()
+        return listenerId
+    }
+
+    /// Listen to a single conversation document (used for typing indicators)
+    func listenToConversation(
+        id conversationId: String,
+        onChange: @escaping (Conversation?) -> Void
+    ) -> String {
+        let listenerId = UUID().uuidString
+
+        let listener = db.collection("conversations").document(conversationId)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard self != nil else { return }
+
+                if let error = error {
+                    Logger.firestore.error("Conversation listener error: \(error.localizedDescription)")
+                    return
+                }
+
+                guard let snapshot = snapshot else { return }
+                let conversation = try? snapshot.data(as: Conversation.self)
+                onChange(conversation)
             }
 
         listenersLock.lock()

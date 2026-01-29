@@ -25,7 +25,10 @@ struct ConversationListView: View {
             }
         }
         .background(Color(.windowBackgroundColor))
-        .sheet(isPresented: $showNewConversation) {
+        .sheet(isPresented: $showNewConversation, onDismiss: {
+            viewModel.searchQuery = ""
+            viewModel.searchResults = []
+        }) {
             NewConversationView(viewModel: viewModel)
         }
         .alert("Delete Conversation", isPresented: $showDeleteConfirmation) {
@@ -44,10 +47,10 @@ struct ConversationListView: View {
             Text("Are you sure you want to delete this conversation? This cannot be undone.")
         }
         .onAppear {
+            // Start listening if not already active.
+            // Don't stop on onDisappear -- sidebar can collapse in NavigationSplitView
+            // which would kill notifications. Listener is stopped on logout instead.
             viewModel.startListening()
-        }
-        .onDisappear {
-            viewModel.stopListening()
         }
     }
 

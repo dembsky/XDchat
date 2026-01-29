@@ -11,11 +11,17 @@ struct XDchatApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()
-                .frame(minWidth: 800, minHeight: 500)
+                .frame(
+                    minWidth: Constants.UI.minWindowWidth,
+                    minHeight: Constants.UI.minWindowHeight
+                )
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))
-        .defaultSize(width: 1100, height: 700)
+        .defaultSize(
+            width: Constants.UI.defaultWindowWidth,
+            height: Constants.UI.defaultWindowHeight
+        )
         .commands {
             CommandGroup(replacing: .newItem) { }
 
@@ -62,6 +68,7 @@ struct XDchatApp: App {
 
 // MARK: - App Delegate
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     let updaterController: SPUStandardUpdaterController
 
@@ -78,6 +85,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Firebase is configured in AuthService.shared
         configureFirestore()
         applyAppIcon()
+        registerNotificationDefaults()
+        initializeNotifications()
+    }
+
+    private func registerNotificationDefaults() {
+        UserDefaults.standard.register(defaults: [
+            Constants.StorageKeys.notificationsEnabled: true,
+            Constants.StorageKeys.soundEnabled: true,
+            Constants.StorageKeys.badgeEnabled: true
+        ])
+    }
+
+    private func initializeNotifications() {
+        Task {
+            if UserDefaults.standard.bool(forKey: Constants.StorageKeys.notificationsEnabled) {
+                await NotificationService.shared.requestAuthorization()
+            }
+        }
     }
 
     private func configureFirestore() {
@@ -90,18 +115,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func applyAppIcon() {
-        let appIconStyle = UserDefaults.standard.string(forKey: "appIconStyle") ?? "light"
+        let appIconStyle = UserDefaults.standard.string(forKey: Constants.StorageKeys.appIconStyle) ?? "light"
         let iconName = appIconStyle == "dark" ? "AppIconDarkPreview" : "AppIconLightPreview"
         if let icon = NSImage(named: iconName) {
             NSApplication.shared.applicationIconImage = icon
         }
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        NotificationService.shared.clearAllNotifications()
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
-        AuthService.shared.updateOnlineStatus(false)
+        AuthService.shared.updateOnlineStatusSync(false)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            // Reopen main window when clicking dock icon
+            for window in sender.windows {
+                if window.canBecomeMain {
+                    window.makeKeyAndOrderFront(self)
+                    return true
+                }
+            }
+        }
         return true
     }
 }
@@ -118,12 +160,12 @@ final class CheckForUpdatesViewModel: ObservableObject {
 }
 
 struct CheckForUpdatesView: View {
-    @ObservedObject private var viewModel: CheckForUpdatesViewModel
+    @StateObject private var viewModel: CheckForUpdatesViewModel
     private let updater: SPUUpdater
 
     init(updater: SPUUpdater) {
         self.updater = updater
-        self.viewModel = CheckForUpdatesViewModel(updater: updater)
+        self._viewModel = StateObject(wrappedValue: CheckForUpdatesViewModel(updater: updater))
     }
 
     var body: some View {

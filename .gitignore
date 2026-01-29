@@ -79,6 +79,9 @@ fastlane/test_output
 *.tmp
 *.temp
 
+# Personal notes
+todo.md
+
 # Sparkle private key - NEVER COMMIT
 sparkle_private_key.txt
 

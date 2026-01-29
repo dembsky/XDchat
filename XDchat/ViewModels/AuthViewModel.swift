@@ -23,6 +23,9 @@ class AuthViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
+        // Use cached state immediately
+        isAuthenticated = authService.isAuthenticated
+
         // Subscribe to auth state changes
         authService.$isAuthenticated
             .receive(on: DispatchQueue.main)

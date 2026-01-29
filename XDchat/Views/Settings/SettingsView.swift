@@ -4,6 +4,7 @@ struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
     @ObservedObject private var themeManager = ThemeManager.shared
     @ObservedObject private var authService = AuthService.shared
+    @ObservedObject private var notificationService = NotificationService.shared
 
     var body: some View {
         TabView {
@@ -17,7 +18,7 @@ struct SettingsView: View {
                     Label("About", systemImage: "info.circle")
                 }
         }
-        .frame(width: 450, height: 500)
+        .frame(width: Constants.UI.settingsWidth, height: Constants.UI.settingsHeight)
         .onAppear {
             viewModel.loadProfileImage()
             viewModel.applyAppIcon()
@@ -201,8 +202,31 @@ struct SettingsView: View {
 
     private var notificationsSection: some View {
         Section("Notifications") {
-            Toggle("Show notifications for new messages", isOn: .constant(true))
-            Toggle("Play sound for new messages", isOn: .constant(true))
+            Toggle("Show notifications for new messages", isOn: $viewModel.notificationsEnabled)
+                .onChange(of: viewModel.notificationsEnabled) { _, enabled in
+                    if enabled {
+                        Task {
+                            let granted = await notificationService.requestAuthorization()
+                            if !granted {
+                                viewModel.notificationsEnabled = false
+                            }
+                        }
+                    }
+                }
+            if viewModel.notificationsEnabled && !notificationService.isAuthorized {
+                Text("Notifications are disabled in System Settings. Open System Settings > Notifications to enable them.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Toggle("Play sound for new messages", isOn: $viewModel.soundEnabled)
+            Toggle("Show badge on app icon", isOn: $viewModel.badgeEnabled)
+                .onChange(of: viewModel.badgeEnabled) { _, enabled in
+                    if !enabled {
+                        Task {
+                            await notificationService.clearBadge()
+                        }
+                    }
+                }
         }
     }
 

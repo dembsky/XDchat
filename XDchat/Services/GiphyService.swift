@@ -84,6 +84,7 @@ enum GiphyError: LocalizedError {
     }
 }
 
+@MainActor
 class GiphyService: ObservableObject, GiphyServiceProtocol {
     static let shared = GiphyService()
 
@@ -112,33 +113,22 @@ class GiphyService: ObservableObject, GiphyServiceProtocol {
             throw GiphyError.invalidURL
         }
 
+        isLoading = true
+
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let images = try await performFetch(url: url)
 
-            if let httpResponse = response as? HTTPURLResponse {
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    throw GiphyError.httpError(httpResponse.statusCode)
-                }
+            if offset == 0 {
+                trendingGifs = images
+            } else {
+                trendingGifs.append(contentsOf: images)
             }
 
-            let giphyResponse = try JSONDecoder().decode(GiphySearchResponse.self, from: data)
-            let images = giphyResponse.data.compactMap { mapToGiphyImage($0) }
-
-            await MainActor.run {
-                if offset == 0 {
-                    self.trendingGifs = images
-                } else {
-                    self.trendingGifs.append(contentsOf: images)
-                }
-            }
-
+            isLoading = false
             return images
-        } catch let error as GiphyError {
-            throw error
-        } catch let error as DecodingError {
-            throw GiphyError.decodingError(error)
         } catch {
-            throw GiphyError.networkError(error)
+            isLoading = false
+            throw error
         }
     }
 
@@ -156,16 +146,34 @@ class GiphyService: ObservableObject, GiphyServiceProtocol {
             throw GiphyError.invalidURL
         }
 
-        await MainActor.run {
-            self.isLoading = true
-        }
+        isLoading = true
 
-        defer {
-            Task { @MainActor in
-                self.isLoading = false
+        do {
+            let images = try await performFetch(url: url)
+
+            if offset == 0 {
+                searchResults = images
+            } else {
+                searchResults.append(contentsOf: images)
             }
-        }
 
+            isLoading = false
+            return images
+        } catch {
+            isLoading = false
+            throw error
+        }
+    }
+
+    // MARK: - Clear Results
+
+    func clearSearch() {
+        searchResults = []
+    }
+
+    // MARK: - Helpers
+
+    private func performFetch(url: URL) async throws -> [GiphyImage] {
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
 
@@ -176,17 +184,7 @@ class GiphyService: ObservableObject, GiphyServiceProtocol {
             }
 
             let giphyResponse = try JSONDecoder().decode(GiphySearchResponse.self, from: data)
-            let images = giphyResponse.data.compactMap { mapToGiphyImage($0) }
-
-            await MainActor.run {
-                if offset == 0 {
-                    self.searchResults = images
-                } else {
-                    self.searchResults.append(contentsOf: images)
-                }
-            }
-
-            return images
+            return giphyResponse.data.compactMap { mapToGiphyImage($0) }
         } catch let error as GiphyError {
             throw error
         } catch let error as DecodingError {
@@ -195,15 +193,6 @@ class GiphyService: ObservableObject, GiphyServiceProtocol {
             throw GiphyError.networkError(error)
         }
     }
-
-    // MARK: - Clear Results
-
-    @MainActor
-    func clearSearch() {
-        searchResults = []
-    }
-
-    // MARK: - Helper
 
     private func mapToGiphyImage(_ gif: GiphyGif) -> GiphyImage? {
         guard let originalUrl = URL(string: gif.images.original.url),

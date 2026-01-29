@@ -1,4 +1,18 @@
 import Foundation
+import os.log
+
+// MARK: - Logging
+
+extension Logger {
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.xdchat.app"
+
+    static let auth = Logger(subsystem: subsystem, category: "Auth")
+    static let firestore = Logger(subsystem: subsystem, category: "Firestore")
+    static let notifications = Logger(subsystem: subsystem, category: "Notifications")
+    static let conversations = Logger(subsystem: subsystem, category: "Conversations")
+}
+
+// MARK: - Constants
 
 enum Constants {
     // MARK: - Time Intervals
@@ -42,8 +56,17 @@ enum Constants {
         /// Maximum emoji character count for emoji-only messages
         static let maxEmojiMessageLength: Int = 8
 
+        /// Maximum message content length
+        static let maxMessageLength: Int = 10_000
+
+        /// Maximum notification preview length
+        static let maxNotificationPreviewLength: Int = 100
+
         /// Invitation code length
         static let invitationCodeLength: Int = 6
+
+        /// Maximum pending notification tasks before eviction
+        static let maxPendingNotificationTasks: Int = 50
     }
 
     // MARK: - UI
@@ -86,6 +109,7 @@ enum Constants {
         static let newConversation = Notification.Name("newConversation")
         static let focusSearch = Notification.Name("focusSearch")
         static let showInviteUsers = Notification.Name("showInviteUsers")
+        static let openConversation = Notification.Name("openConversation")
     }
 
     // MARK: - Storage Keys
@@ -95,5 +119,9 @@ enum Constants {
         static let profileImageData = "profileImageData"
         static let quickEmojis = "quickEmojis"
         static let selectedTheme = "selectedTheme"
+        static let wasAuthenticated = "wasAuthenticated"
+        static let notificationsEnabled = "notificationsEnabled"
+        static let soundEnabled = "soundEnabled"
+        static let badgeEnabled = "badgeEnabled"
     }
 }

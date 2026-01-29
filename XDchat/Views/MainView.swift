@@ -4,7 +4,7 @@ struct MainView: View {
     @StateObject private var authViewModel = AuthViewModel()
     @StateObject private var conversationsViewModel = ConversationsViewModel()
     @ObservedObject private var themeManager = ThemeManager.shared
-    @AppStorage("profileImageData") private var profileImageData: Data = Data()
+    @AppStorage(Constants.StorageKeys.profileImageData) private var profileImageData: Data = Data()
 
     @State private var showSettings = false
     @State private var showInviteUsers = false
@@ -38,6 +38,26 @@ struct MainView: View {
             if authViewModel.isAuthenticated {
                 syncProfileImageFromFirestore()
             }
+            // Handle notification taps that arrived before the UI was ready (cold launch)
+            if let pendingId = NotificationService.shared.pendingConversationId {
+                NotificationService.shared.pendingConversationId = nil
+                Task {
+                    await conversationsViewModel.fetchAndSelectConversation(id: pendingId)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Constants.Notifications.openConversation)) { notification in
+            guard let conversationId = notification.userInfo?["conversationId"] as? String else { return }
+            // Clear pending since we're handling it now
+            NotificationService.shared.pendingConversationId = nil
+
+            if let conversation = conversationsViewModel.conversations.first(where: { $0.id == conversationId }) {
+                conversationsViewModel.selectConversation(conversation)
+            } else {
+                Task {
+                    await conversationsViewModel.fetchAndSelectConversation(id: conversationId)
+                }
+            }
         }
     }
 
@@ -69,7 +89,11 @@ struct MainView: View {
         NavigationSplitView {
             // Sidebar
             sidebar
-                .navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 400)
+                .navigationSplitViewColumnWidth(
+                    min: Constants.UI.sidebarMinWidth,
+                    ideal: Constants.UI.sidebarIdealWidth,
+                    max: Constants.UI.sidebarMaxWidth
+                )
         } detail: {
             // Chat area
             chatDetailView
@@ -200,17 +224,6 @@ struct MainView: View {
         }
     }
 
-    private func getUserDisplayText(_ user: User) -> String {
-        if !user.displayName.isEmpty {
-            return user.displayName
-        } else if !user.email.isEmpty {
-            return user.email
-        } else if let id = user.id {
-            return "User: \(String(id.prefix(8)))..."
-        } else {
-            return "Unknown User"
-        }
-    }
 }
 
 #Preview {

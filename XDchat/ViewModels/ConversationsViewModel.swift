@@ -1,5 +1,7 @@
 import Foundation
 import Combine
+import AppKit
+import os.log
 
 @MainActor
 class ConversationsViewModel: ObservableObject {
@@ -16,10 +18,14 @@ class ConversationsViewModel: ObservableObject {
 
     private let firestoreService = FirestoreService.shared
     private let authService = AuthService.shared
+    private let notificationService = NotificationService.shared
     private var conversationsListenerId: String?
     private var cancellables = Set<AnyCancellable>()
     private var searchTask: Task<Void, Never>?
+    private var notificationTasks: [Task<Void, Never>] = []
     private var deletingConversationIds = Set<String>()
+    private var lastMessageTimestamps: [String: Date] = [:]
+    private var isInitialLoad = true
 
     var currentUserId: String? {
         authService.currentUser?.id
@@ -33,22 +39,24 @@ class ConversationsViewModel: ObservableObject {
     // MARK: - Auth Observer
 
     private func setupAuthObserver() {
-        // Obserwuj zmiany currentUser w AuthService
-        // Gdy użytkownik się zaloguje, pobierz listę użytkowników
         authService.$currentUser
             .receive(on: DispatchQueue.main)
             .sink { [weak self] user in
-                guard let self = self, user != nil else { return }
-                // Użytkownik zalogowany - pobierz listę użytkowników
-                Task {
-                    await self.fetchAllUsers()
+                guard let self else { return }
+                if user != nil {
+                    Task { [weak self] in
+                        await self?.fetchAllUsers()
+                    }
+                } else {
+                    // User logged out - stop listening and reset state
+                    self.stopListening()
+                    self.conversations = []
+                    self.selectedConversation = nil
+                    self.users = [:]
+                    self.allUsers = []
                 }
             }
             .store(in: &cancellables)
-    }
-
-    nonisolated func cleanup() {
-        // Cleanup is handled by stopListening() which should be called when view disappears
     }
 
     // MARK: - Setup
@@ -67,6 +75,9 @@ class ConversationsViewModel: ObservableObject {
 
     func startListening() {
         guard let userId = currentUserId else { return }
+        // Prevent duplicate listeners if already active
+        guard conversationsListenerId == nil else { return }
+        isInitialLoad = true
 
         conversationsListenerId = firestoreService.listenToConversations(for: userId) { [weak self] conversations in
             Task { @MainActor in
@@ -76,8 +87,30 @@ class ConversationsViewModel: ObservableObject {
                     guard let id = conversation.id else { return true }
                     return !self.deletingConversationIds.contains(id)
                 }
+
+                // Clean up deletion guards for conversations that are no longer in the snapshot
+                let activeIds = Set(conversations.compactMap(\.id))
+                self.deletingConversationIds = self.deletingConversationIds.filter { activeIds.contains($0) }
+
+                // Capture old timestamps before updating to prevent duplicate notifications
+                let previousTimestamps = self.lastMessageTimestamps
+
+                // Update stored timestamps immediately
+                for conversation in filteredConversations {
+                    if let id = conversation.id, let timestamp = conversation.lastMessageAt {
+                        self.lastMessageTimestamps[id] = timestamp
+                    }
+                }
+
+                // Check for new messages using old timestamps
+                if !self.isInitialLoad {
+                    self.checkForNewMessages(filteredConversations, previousTimestamps: previousTimestamps)
+                }
+
                 self.conversations = filteredConversations
                 await self.fetchParticipantUsers(for: filteredConversations)
+
+                self.isInitialLoad = false
             }
         }
     }
@@ -87,6 +120,104 @@ class ConversationsViewModel: ObservableObject {
             firestoreService.removeListener(id: listenerId)
             conversationsListenerId = nil
         }
+        notificationTasks.forEach { $0.cancel() }
+        notificationTasks.removeAll()
+        lastMessageTimestamps.removeAll()
+        isInitialLoad = true
+    }
+
+    // MARK: - Notifications
+
+    private func checkForNewMessages(_ conversations: [Conversation], previousTimestamps: [String: Date]) {
+        guard let currentUserId = currentUserId else { return }
+
+        let notificationsEnabled = UserDefaults.standard.bool(forKey: Constants.StorageKeys.notificationsEnabled)
+        guard notificationsEnabled else { return }
+
+        let soundEnabled = UserDefaults.standard.bool(forKey: Constants.StorageKeys.soundEnabled)
+
+        for conversation in conversations {
+            notifyIfNewMessage(
+                conversation,
+                currentUserId: currentUserId,
+                previousTimestamps: previousTimestamps,
+                soundEnabled: soundEnabled
+            )
+        }
+
+        Task {
+            await updateBadgeCount(conversations)
+        }
+    }
+
+    private func notifyIfNewMessage(
+        _ conversation: Conversation,
+        currentUserId: String,
+        previousTimestamps: [String: Date],
+        soundEnabled: Bool
+    ) {
+        guard let conversationId = conversation.id,
+              let newTimestamp = conversation.lastMessageAt,
+              let senderId = conversation.lastMessageSenderId,
+              senderId != currentUserId else { return }
+
+        // Only notify if we had a previous timestamp to compare against.
+        // If oldTimestamp is nil, this conversation is new to our snapshot --
+        // the message may be old, so skip to avoid stale notifications.
+        guard let oldTimestamp = previousTimestamps[conversationId] else { return }
+        let isNewMessage = newTimestamp > oldTimestamp
+        let isCurrentConversation = selectedConversation?.id == conversationId && NSApp.isActive
+
+        guard isNewMessage, !isCurrentConversation else { return }
+
+        let rawPreview = conversation.lastMessage ?? "sent a message"
+        let maxLength = Constants.Validation.maxNotificationPreviewLength
+        let messagePreview = rawPreview.count > maxLength ? String(rawPreview.prefix(maxLength)) + "..." : rawPreview
+
+        // Prevent unbounded growth: remove cancelled tasks and cap size
+        notificationTasks.removeAll { $0.isCancelled }
+        let maxTasks = Constants.Validation.maxPendingNotificationTasks
+        if notificationTasks.count > maxTasks {
+            notificationTasks.removeFirst(notificationTasks.count - maxTasks)
+        }
+
+        let task = Task { [weak self] in
+            guard let self, !Task.isCancelled else { return }
+            var senderName = self.users[senderId]?.displayName
+            if senderName == nil {
+                if let user = try? await self.firestoreService.getUser(userId: senderId) {
+                    guard !Task.isCancelled else { return }
+                    self.users[senderId] = user
+                    senderName = user.displayName
+                }
+            }
+
+            guard !Task.isCancelled else { return }
+            self.notificationService.showNotification(
+                title: senderName ?? "New Message",
+                body: messagePreview,
+                conversationId: conversationId,
+                sound: soundEnabled
+            )
+        }
+        notificationTasks.append(task)
+    }
+
+    private func updateBadgeCount(_ conversations: [Conversation]) async {
+        let badgeEnabled = UserDefaults.standard.bool(forKey: Constants.StorageKeys.badgeEnabled)
+
+        guard badgeEnabled else {
+            await notificationService.clearBadge()
+            return
+        }
+
+        guard let currentUserId = currentUserId else { return }
+
+        let unreadCount = conversations.reduce(0) { count, conversation in
+            count + (conversation.unreadCount[currentUserId] ?? 0)
+        }
+
+        await notificationService.setBadgeCount(unreadCount)
     }
 
     private func fetchParticipantUsers(for conversations: [Conversation]) async {
@@ -155,9 +286,7 @@ class ConversationsViewModel: ObservableObject {
             } catch {
                 if !Task.isCancelled {
                     isSearching = false
-                    #if DEBUG
-                    print("[DEBUG] Search failed: \(error)")
-                    #endif
+                    Logger.conversations.debug("Search failed: \(error.localizedDescription)")
                 }
             }
         }
@@ -222,6 +351,28 @@ class ConversationsViewModel: ObservableObject {
         }
     }
 
+    /// Fetch and select a conversation by ID (used when opening from notification)
+    func fetchAndSelectConversation(id conversationId: String) async {
+        // First check if already loaded
+        if let conversation = conversations.first(where: { $0.id == conversationId }) {
+            selectConversation(conversation)
+            return
+        }
+
+        // Fetch single conversation from Firestore
+        do {
+            guard let conversation = try await firestoreService.getConversation(id: conversationId) else {
+                errorMessage = "Could not open conversation"
+                return
+            }
+            await fetchParticipantUsers(for: [conversation])
+            selectConversation(conversation)
+        } catch {
+            Logger.conversations.error("Failed to fetch conversation \(conversationId): \(error.localizedDescription)")
+            errorMessage = "Could not open conversation"
+        }
+    }
+
     // MARK: - Fetch All Users
 
     func fetchAllUsers() async {
@@ -241,7 +392,6 @@ class ConversationsViewModel: ObservableObject {
 
     // MARK: - Delete Conversation
 
-    @MainActor
     func deleteConversation(_ conversation: Conversation) async {
         guard let conversationId = conversation.id else {
             return
@@ -260,7 +410,8 @@ class ConversationsViewModel: ObservableObject {
 
         do {
             try await firestoreService.deleteConversation(conversationId: conversationId)
-            // Keep in deletingConversationIds to prevent re-adding from any pending listener updates
+            // deletingConversationIds is cleaned up automatically in the listener
+            // when the conversation disappears from the Firestore snapshot
         } catch {
             errorMessage = error.localizedDescription
             // Remove from deleting set and re-fetch if failed
@@ -273,8 +424,6 @@ class ConversationsViewModel: ObservableObject {
 
     private func fetchConversations(for userId: String) async throws {
         let fetchedConversations = try await firestoreService.getConversations(for: userId)
-        await MainActor.run {
-            self.conversations = fetchedConversations
-        }
+        self.conversations = fetchedConversations
     }
 }

@@ -3,12 +3,15 @@ import Combine
 
 @MainActor
 class SettingsViewModel: ObservableObject {
-    @AppStorage("quickEmojis") private var quickEmojisData: Data = {
+    @AppStorage(Constants.StorageKeys.quickEmojis) private var quickEmojisData: Data = {
         let defaultEmojis = ["👍", "❤️", "😂"]
         return (try? JSONEncoder().encode(defaultEmojis)) ?? Data()
     }()
-    @AppStorage("profileImageData") private var profileImageData: Data = Data()
-    @AppStorage("appIconStyle") var appIconStyle: String = "light"
+    @AppStorage(Constants.StorageKeys.profileImageData) private var profileImageData: Data = Data()
+    @AppStorage(Constants.StorageKeys.appIconStyle) var appIconStyle: String = "light"
+    @AppStorage(Constants.StorageKeys.notificationsEnabled) var notificationsEnabled: Bool = true
+    @AppStorage(Constants.StorageKeys.soundEnabled) var soundEnabled: Bool = true
+    @AppStorage(Constants.StorageKeys.badgeEnabled) var badgeEnabled: Bool = true
 
     @Published var profileImage: NSImage?
 
@@ -94,9 +97,7 @@ class SettingsViewModel: ObservableObject {
         do {
             try await FirestoreService.shared.updateUserAvatar(userId: userId, avatarData: base64String)
         } catch {
-            await MainActor.run {
-                self.uploadError = "Failed to upload profile image"
-            }
+            self.uploadError = "Failed to upload profile image"
         }
     }
 

@@ -6,6 +6,45 @@
         <description>Updates for XDchat application</description>
         <language>en</language>
         <item>
+            <title>Version 4.1.1</title>
+            <description><![CDATA[
+                <h2>XDchat 4.1.1</h2>
+                <p>Po konsultacji z osobistym ziomkiem od testow Mr. Greg, wprowadzilem nastepujace poprawki:</p>
+                <h3>Nowe funkcje</h3>
+                <ul>
+                    <li>System powiadomien - natywne powiadomienia macOS o nowych wiadomosciach</li>
+                    <li>Badge na ikonie Dock z liczba nieprzeczytanych wiadomosci</li>
+                    <li>Ustawienia dzwieku i powiadomien w preferencjach</li>
+                    <li>Klikniecie w powiadomienie otwiera rozmowe (nawet przy zimnym starcie)</li>
+                    <li>Aplikacja zostaje w Dock po zamknieciu okna</li>
+                </ul>
+                <h3>Poprawki bezpieczenstwa i stabilnosci</h3>
+                <ul>
+                    <li>Atomowa walidacja kodow zaproszen (koniec z race conditions)</li>
+                    <li>Rollback rejestracji jesli cos pojdzie nie tak (Auth + zaproszenie)</li>
+                    <li>Poprawiona izolacja watkow (@MainActor na kluczowych serwisach)</li>
+                    <li>Naprawiony wyciek listenerow Firestore przy wylogowaniu</li>
+                </ul>
+                <h3>Pod maska</h3>
+                <ul>
+                    <li>Zunifikowane logowanie przez os.log (koniec z print-debugowaniem)</li>
+                    <li>Scentralizowane stale (Collections, StorageKeys, UI, Validation)</li>
+                    <li>Usunieto martwy kod (ListenerManager, 123 linie mniej)</li>
+                    <li>Bezpieczne usuwanie konwersacji (batch delete, optimistic UI)</li>
+                    <li>Build: 0 bledow, 0 warningow - Mr. Greg moze byc dumny</li>
+                </ul>
+            ]]></description>
+            <pubDate>Wed, 29 Jan 2026 12:00:00 +0000</pubDate>
+            <sparkle:version>28</sparkle:version>
+            <sparkle:shortVersionString>4.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure
+                url="https://github.com/dembsky/XDchat/releases/download/v4.1.1/XDchat-4.1.1.zip"
+                sparkle:edSignature="DSYyiwuIaXnvs/sZU/aOxAgmocPwQdGdb1UOIJwQJsGwRkeP8yJnuwghq5Cw6gCoMs8KgHBhkPgmNwBesjKJBQ=="
+                length="14065621"
+                type="application/octet-stream"/>
+        </item>
+        <item>
             <title>Version 4.0.3</title>
             <description><![CDATA[
                 <h2>XDchat 4.0.3</h2>

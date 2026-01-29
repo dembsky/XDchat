@@ -3,13 +3,14 @@ import Combine
 
 // MARK: - Auth Service Protocol
 
+@MainActor
 protocol AuthServiceProtocol: ObservableObject {
     var currentUser: User? { get }
     var isAuthenticated: Bool { get }
     var isLoading: Bool { get }
 
     func login(email: String, password: String) async throws
-    @MainActor func logout() throws
+    func logout() throws
     func register(email: String, password: String, displayName: String, invitationCode: String?) async throws
     func resetPassword(email: String) async throws
     func updateOnlineStatus(_ isOnline: Bool)
@@ -29,8 +30,10 @@ protocol FirestoreServiceProtocol {
     // Conversations
     func createConversation(participants: [String]) async throws -> Conversation
     func deleteConversation(conversationId: String) async throws
+    func getConversation(id: String) async throws -> Conversation?
     func getConversations(for userId: String) async throws -> [Conversation]
     func listenToConversations(for userId: String, onChange: @escaping ([Conversation]) -> Void) -> String
+    func listenToConversation(id conversationId: String, onChange: @escaping (Conversation?) -> Void) -> String
     func updateConversationLastMessage(conversationId: String, message: String, senderId: String) async throws
 
     // Messages
@@ -69,6 +72,7 @@ protocol InvitationServiceProtocol: ObservableObject {
 
 // MARK: - Giphy Service Protocol
 
+@MainActor
 protocol GiphyServiceProtocol: ObservableObject {
     var trendingGifs: [GiphyImage] { get }
     var searchResults: [GiphyImage] { get }
@@ -76,7 +80,7 @@ protocol GiphyServiceProtocol: ObservableObject {
 
     func fetchTrending(limit: Int, offset: Int) async throws -> [GiphyImage]
     func search(query: String, limit: Int, offset: Int) async throws -> [GiphyImage]
-    @MainActor func clearSearch()
+    func clearSearch()
 }
 
 // MARK: - Default Parameter Extensions

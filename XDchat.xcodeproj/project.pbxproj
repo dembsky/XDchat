@@ -45,7 +45,7 @@
 		E8662C0E2DFA378CA16F2AD3 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02793CDBEC1CE32ADECFC27C /* Constants.swift */; };
 		EA5C44E050602CF8BB39BABA /* MessageInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B32E9B70491E7973F2E62CC /* MessageInputView.swift */; };
 		EF26F5E440651021F20BAF55 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78B5230CDDB40C7C50837E7E /* Theme.swift */; };
-		FF5B343DD9A3995A749D4B74 /* ListenerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F95AE2CEEC25777468FF5B4 /* ListenerManager.swift */; };
+		6F412E5702C342F1A5609944 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1115E5EA8F564CD8A0D8500C /* NotificationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,7 +62,6 @@
 		361E9F8272505836BB4595AA /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		3C96C342A9CD017C35BDCC4E /* FirestoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
 		3D2E79BAA608CD070F9FD7A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		3F95AE2CEEC25777468FF5B4 /* ListenerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListenerManager.swift; sourceTree = "<group>"; };
 		4149581E6C91BB23954566FB /* MessageBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
 		5415B509DF0BFE8BC8BC8D01 /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
 		5E73DD8F15DDE10DA4C5B912 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
@@ -88,6 +87,7 @@
 		E182081191E5B9B73A84D3C3 /* Entitlements.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Entitlements.entitlements; sourceTree = "<group>"; };
 		ED30CA7E2697C3B08934E36F /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		F6E336A615D9DEA900726E95 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		1115E5EA8F564CD8A0D8500C /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -172,7 +172,7 @@
 				3C96C342A9CD017C35BDCC4E /* FirestoreService.swift */,
 				61F8E2D63FB546921E923292 /* GiphyService.swift */,
 				BE4C0D7F007100C95468E19D /* InvitationService.swift */,
-				3F95AE2CEEC25777468FF5B4 /* ListenerManager.swift */,
+				1115E5EA8F564CD8A0D8500C /* NotificationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -358,7 +358,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nAPP_PATH=\"${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}\"\nSPARKLE_PATH=\"${APP_PATH}/Contents/Frameworks/Sparkle.framework\"\nENTITLEMENTS=\"${SRCROOT}/XDchat/Resources/SparkleXPC.entitlements\"\nIDENTITY=\"${EXPANDED_CODE_SIGN_IDENTITY:-${CODE_SIGN_IDENTITY}}\"\n\nif [ ! -d \"$SPARKLE_PATH\" ]; then\n    echo \"Sparkle not found, skipping...\"\n    exit 0\nfi\n\necho \"Signing Sparkle components...\"\n\n# XPC services: signed WITH sandbox entitlements\ncodesign --force --sign \"$IDENTITY\" --entitlements \"$ENTITLEMENTS\" --options runtime \"$SPARKLE_PATH/Versions/B/XPCServices/Installer.xpc\" || true\ncodesign --force --sign \"$IDENTITY\" --entitlements \"$ENTITLEMENTS\" --options runtime \"$SPARKLE_PATH/Versions/B/XPCServices/Downloader.xpc\" || true\n\n# Updater and Autoupdate: signed WITHOUT sandbox (they need filesystem access to replace the app)\ncodesign --force --sign \"$IDENTITY\" --options runtime \"$SPARKLE_PATH/Versions/B/Updater.app\" || true\ncodesign --force --sign \"$IDENTITY\" --options runtime \"$SPARKLE_PATH/Versions/B/Autoupdate\" || true\n\n# Framework itself\ncodesign --force --sign \"$IDENTITY\" --options runtime \"$SPARKLE_PATH\" || true\n\necho \"Done!\"\n";
+			shellScript = "set -e\n\nAPP_PATH=\"${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}\"\nSPARKLE_PATH=\"${APP_PATH}/Contents/Frameworks/Sparkle.framework\"\nENTITLEMENTS=\"${SRCROOT}/XDchat/Resources/SparkleXPC.entitlements\"\nIDENTITY=\"${EXPANDED_CODE_SIGN_IDENTITY:-${CODE_SIGN_IDENTITY}}\"\n\nif [ ! -d \"$SPARKLE_PATH\" ]; then\n    echo \"Sparkle not found, skipping...\"\n    exit 0\nfi\n\necho \"Signing Sparkle components...\"\n\n# All components must have app-sandbox entitlement for Developer ID validation\ncodesign --force --sign \"$IDENTITY\" --entitlements \"$ENTITLEMENTS\" --options runtime \"$SPARKLE_PATH/Versions/B/XPCServices/Installer.xpc\" || true\ncodesign --force --sign \"$IDENTITY\" --entitlements \"$ENTITLEMENTS\" --options runtime \"$SPARKLE_PATH/Versions/B/XPCServices/Downloader.xpc\" || true\ncodesign --force --sign \"$IDENTITY\" --entitlements \"$ENTITLEMENTS\" --options runtime \"$SPARKLE_PATH/Versions/B/Updater.app\" || true\ncodesign --force --sign \"$IDENTITY\" --entitlements \"$ENTITLEMENTS\" --options runtime \"$SPARKLE_PATH/Versions/B/Autoupdate\" || true\n\n# Framework itself\ncodesign --force --sign \"$IDENTITY\" --options runtime \"$SPARKLE_PATH\" || true\n\necho \"Done!\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -384,7 +384,6 @@
 				69B54E2DCAF5605C6F995280 /* InvitationService.swift in Sources */,
 				BF14CDC0E6D7CECA5003C83C /* InvitationViewModel.swift in Sources */,
 				8C0B8D054C46D8FE81A1976C /* InviteUserView.swift in Sources */,
-				FF5B343DD9A3995A749D4B74 /* ListenerManager.swift in Sources */,
 				D6B58F0EA50DE250F0ECD56F /* LoginView.swift in Sources */,
 				BCC037642C176D789B11DB5C /* MainView.swift in Sources */,
 				BD797D109BD30ACBA53CAF0C /* ManageUsersView.swift in Sources */,
@@ -400,6 +399,7 @@
 				EF26F5E440651021F20BAF55 /* Theme.swift in Sources */,
 				1D5E49CB877D771573FB9706 /* User.swift in Sources */,
 				303C34900A8AE98178D8FF56 /* XDchatApp.swift in Sources */,
+				6F412E5702C342F1A5609944 /* NotificationService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
